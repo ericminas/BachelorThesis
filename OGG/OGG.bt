@@ -1,0 +1,22 @@
+//------------------------------------------------
+//--- 010 Editor v11.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+typedef struct {
+    char    capturePattern[4];  // 'OGGS'  
+    byte    version;            // 1
+    byte    headerType;         // 0 | 1 | 2
+    quad    absoluteGranulePosition;
+    DWORD   bitStreamSerial:
+    DWORD   pageSequenceNumber;
+    ubyte   numberOfSegments;   // [0 - 255] : number of segments that follow
+} pageHeader
