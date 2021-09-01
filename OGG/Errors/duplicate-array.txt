@@ -1,0 +1,103 @@
+ ---------- commands ----------
+ 	1) (at the formatFuzzer dir) make ogg-fuzzer
+	
+ ---------- code ----------
+local uint MAXPAGES = 100;
+local uint currpage = 0;
+local ubyte maxArrayLength = 100; // if arrays are longer than this, the generator just quits!
+
+typedef struct {
+    CHAR    CapturePattern[4];  // must be 'OGGS'  
+    BYTE    Version;            // must be 0
+    BYTE    HeaderType;         // 2 -> not first | 1 -> first | 4 -> last
+    QUAD    GranulePosition;
+    DWORD   BitstreamSerial;
+    DWORD   PageSequenceNumber = {currpage++};
+    DWORD   Checksum;
+    UBYTE   PageSegments <min=1, max=100>;
+
+    Printf( "LENGTH: %d\n", PageSegments);
+    // generate the array of segment lenghts as a duplicate array    
+    local uint i;
+    
+    for (i = 0; i < PageSegments; i++) {
+        UBYTE   SegmentLen; 
+    }
+
+    // the segments themselves
+    for (i = 0; i < PageSegments; i++) {
+            // generate an array called data with the length that was defined by the pageSegments array at the correct position 
+        struct {
+            BYTE Data[SegmentLen[i]] <bgcolor=cLtGray>;
+        } Segment;
+    }
+} PAGE;
+
+
+LittleEndian(); 
+
+
+while( !FEof() )
+{
+  
+    if (MAXPAGES < currpage) 
+    {
+        Printf("Max Pages of %d reached!\n", MAXPAGES);
+        return 0;
+    }
+
+    local int evilBit = SetEvilBit(false);
+    PAGE page <bgcolor=cLtBlue>;
+    SetEvilBit(evilBit);
+    
+    // Check for valid header -> mining magic values
+    if ( page.CapturePattern != "OggS" || page.Version != 0)
+    {
+        Warning( "File is not a valid ogg file. Template stopped." );
+        return -1;
+    }
+
+    // check for valid HeaderType -> mining magic values
+    if (( currpage == 0 && (page.HeaderType != 1 || page.HeaderType != 2)) 
+        || (currpage == MAXPAGES && page.HeaderType != 4)
+        || (currpage != 0 && page.HeaderType != 2)
+        ) {
+        Warning( "Headertype is not matching" );
+        return -1;
+    }
+
+  currpage++;
+}
+
+ 
+ ---------- console-output ---------- 
+ 1)
+ - 
+ | ./ffcompile templates/ogg.bt ogg.cpp
+ | Finished creating cpp generator.
+ | 
+ | Mined interesting values:
+ | 
+ | CapturePattern: ['"OggS"']
+ | HeaderType: ['1', '2', '4', '2']
+ | Version: ['0']
+ | 
+ | File stat functions found:
+ | 
+ | FEof
+ | 
+ | g++ -std=c++17 -DHAVE_CONFIG_H -I.     -g -O3 -Wall -MT ogg.o -MD -MP -MF .deps/ogg.Tpo -c -o ogg.o ogg.cpp
+ | In file included from ogg.cpp:6:
+ | ogg.cpp: In member function ‘Segment_struct* Segment_struct::generate(uint&)’:
+ | ogg.cpp:467:59: error: invalid types ‘UBYTE {aka unsigned char}[uint {aka unsigned int}]’ for array subscript
+ |   467 |  GENERATE_VAR(Data, ::g->Data.generate(::g->SegmentLen()[i]));
+ |       |                                                           ^
+ | bt.h:116:18: note: in definition of macro ‘GENERATE_VAR’
+ |   116 |  name ## _var = (value);        \
+ |       |                  ^~~~~
+ | make: *** [Makefile:410: ogg.o] Error 1
+ –
+ 
+ ---------- generated file behaviour ----------
+EXPECTED: it should create a duplicate array (and if the <min/max> statement is added it should obey that
+ACTUAL: it fails to build the fuzzer

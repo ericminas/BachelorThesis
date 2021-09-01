@@ -1,0 +1,93 @@
+//------------------------------------------------
+//--- 010 Editor v4.0.4 Binary Template
+//
+//      File: OGG.bt
+//   Authors: George Woods
+//   Version: 1.1
+//   Purpose: Parses the ogg container format.
+//  Category: Audio
+// File Mask: *.ogg,*.oga,*.ogv,*.ogx
+//  ID Bytes: 4F 67 67 53 //OggS
+//   History: 
+//   1.1   2016-01-28 SweetScape: Updated header for repository submission.
+//   1.0   GS: Initial release.
+//------------------------------------------------
+
+// ogg files can be quite large. Don't read more the 1000 pages.
+local uint MAXPAGES = 10;
+local uint currpage = 0;
+local ubyte maxArrayLength = 100; // if arrays are longer than this, the generator just quits!
+
+typedef struct {
+    CHAR    CapturePattern[4];  // must be 'OGGS'  
+    BYTE    Version;            // must be 0
+    BYTE    HeaderType;         // 2 -> not first | 1 -> first | 4 -> last
+    QUAD    GranulePosition;
+    DWORD   BitstreamSerial;
+    DWORD   PageSequenceNumber = {currpage++};
+    DWORD   Checksum;
+    UBYTE   PageSegments <min=1, max=100>;
+
+    Printf( "LENGTH: %d\n", PageSegments);
+   // generate the array of segment lenghts
+    UBYTE   SegmentLen[PageSegments];
+   
+    local uint i;
+    
+    for (i = 0; i < PageSegments; i++) {
+        if(SegmentLen > maxArrayLength) {
+            SegmentLen[i] = 10;
+            // SegmentLen[i] = {2,5,10,15,20,25,30,35,40,45,50};
+        }
+    }
+
+    // the segments themselves
+    for (i = 0; i < PageSegments; i++) {
+            // generate an array called data with the length that was defined by the pageSegments array at the correct position 
+        struct {
+            BYTE Data[SegmentLen[i]] <bgcolor=cLtGray>;
+        } Segment;
+    }
+} PAGE;
+
+
+LittleEndian(); 
+
+
+while( !FEof() )
+{
+  
+    if (MAXPAGES < currpage) 
+    {
+        Printf("Max Pages of %d reached!\n", MAXPAGES);
+        return 0;
+    }
+
+    local int evilBit = SetEvilBit(false);
+    PAGE page <bgcolor=cLtBlue>;
+    SetEvilBit(evilBit);
+    
+    // Check for valid header -> mining magic values
+    if ( page.CapturePattern != "OggS" || page.Version != 0)
+    {
+        Warning( "File is not a valid ogg file. Template stopped." );
+        return -1;
+    }
+
+    // check for valid HeaderType -> mining magic values
+    if (( currpage == 0 && (page.HeaderType != 1 || page.HeaderType != 2)) 
+        || (currpage == MAXPAGES && page.HeaderType != 4)
+        || (currpage != 0 && page.HeaderType != 2)
+        ) {
+        Warning( "Headertype is not matching" );
+        return -1;
+    }
+
+ 
+ /*   // check for matching pageSequenceNumber
+    if ( page.PageSequenceNumber != currpage) {
+        Warning("PageSequenceNumber is not matching" );
+        return -1;        
+    } */
+  currpage++;
+}
