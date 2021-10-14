@@ -13,50 +13,71 @@
 //   1.0   GS: Initial release.
 //------------------------------------------------
 
-// ogg files can be quite large. Don't read more the 1000 pages.
+#define MAX_FILE_SIZE 100000; // #pages * 2075 bytes (=> max size per page with 1 segment)
+
 local uint MAXPAGES = 10;
 local uint currpage = 0;
-local ubyte maxArrayLength = 100; // if arrays are longer than this, the generator just quits!
 
 typedef struct {
+    local int64 start_pos = FTell(); // remeber the start of the page for the checksum later
     CHAR    CapturePattern[4];  // must be 'OGGS'  
     BYTE    Version;            // must be 0
-    BYTE    HeaderType;         // 2 -> not first | 1 -> first | 4 -> last
+
+    // 2 -> not first | 1 -> first | 4 -> last
+    if(currpage == 0) {
+        BYTE    HeaderType = { 1 };
+    } else if (currpage == MAXPAGES) {
+        BYTE    HeaderType = { 4 };
+    } else {
+        BYTE    HeaderType = { 2 };
+    }
+
+
     QUAD    GranulePosition;
     DWORD   BitstreamSerial;
     DWORD   PageSequenceNumber = {currpage++};
-    DWORD   Checksum;
-    UBYTE   PageSegments <min=1, max=100>;
-
-    Printf( "LENGTH: %d\n", PageSegments);
-   // generate the array of segment lenghts
-    UBYTE   SegmentLen[PageSegments];
-   
-    local uint i;
+    local int64 checksum_pos = FTell(); // remeber the position of the checksum for later
+    DWORD   Checksum = {99};
+    UBYTE   PageSegments = {1};
     
-    for (i = 0; i < PageSegments; i++) {
-        if(SegmentLen > maxArrayLength) {
-            SegmentLen[i] = 10;
-            // SegmentLen[i] = {2,5,10,15,20,25,30,35,40,45,50};
-        }
-    }
+    // generate the array of segment lenghts
+    UBYTE   SegmentLen;
 
-    // the segments themselves
+    // ## explanation ##
+    // FormatFuzzer cannot influcence the single UBYTES that are within an array, but the size of any array must be limited ( < 128 in my tests)
+    // the only way to generate any valid .ogg is therefore to limit the number of Segments to one per page. Because this is the only way, 
+    // the second array may be influenced to always be less than 128 elements long.
+    
+    // generate an array called data with the length that was defined by the pageSegments array at the correct position 
+    local uint i;
     for (i = 0; i < PageSegments; i++) {
-            // generate an array called data with the length that was defined by the pageSegments array at the correct position 
         struct {
-            BYTE Data[SegmentLen[i]] <bgcolor=cLtGray>;
+              BYTE Data[SegmentLen] <bgcolor=cLtGray>;        
         } Segment;
     }
+
+    // handle checksum
+    // -> jump to the correct part of the file
+    //local int64 jump_return = FTell();    
+    //FSeek(checksum_pos);
+    
+    //Printf("current pos: %d, start: %d, checksum: %d, jr: %d\n", FTell(), start_pos, checksum_pos, jump_return);
+
+    // -> calculate the checksum
+    //local uint32 crc_calc = CheckSum(CHECKSUM_CRC32, start_pos, jump_return - start_pos); // broken
+    //DWORD Checksum = {crc_calc};
+    
+
 } PAGE;
 
 
 LittleEndian(); 
 
 
-while( !FEof() )
-{
-  
+while( !FEof() ) {
+    
+    Printf("generate page %d / %d\n", currpage, MAXPAGES);  
+
     if (MAXPAGES < currpage) 
     {
         Printf("Max Pages of %d reached!\n", MAXPAGES);
@@ -74,20 +95,8 @@ while( !FEof() )
         return -1;
     }
 
-    // check for valid HeaderType -> mining magic values
-    if (( currpage == 0 && (page.HeaderType != 1 || page.HeaderType != 2)) 
-        || (currpage == MAXPAGES && page.HeaderType != 4)
-        || (currpage != 0 && page.HeaderType != 2)
-        ) {
-        Warning( "Headertype is not matching" );
-        return -1;
-    }
-
- 
- /*   // check for matching pageSequenceNumber
-    if ( page.PageSequenceNumber != currpage) {
-        Warning("PageSequenceNumber is not matching" );
-        return -1;        
-    } */
   currpage++;
 }
+
+//Printf("--- generating .ogg finished, created %d pages\ņ", currpage);
+ 
