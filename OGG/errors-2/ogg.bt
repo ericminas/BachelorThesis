@@ -1,0 +1,91 @@
+//------------------------------------------------
+//--- 010 Editor v4.0.4 Binary Template
+//
+//      File: OGG.bt
+//   Authors: George Woods
+//   Version: 1.1
+//   Purpose: Parses the ogg container format.
+//  Category: Audio
+// File Mask: *.ogg,*.oga,*.ogv,*.ogx
+//  ID Bytes: 4F 67 67 53 //OggS
+//   History: 
+//   1.1   2016-01-28 SweetScape: Updated header for repository submission.
+//   1.0   GS: Initial release.
+//------------------------------------------------
+
+#define MAX_FILE_SIZE 100000; // #pages * 2075 bytes (=> max size per page with 1 segment)
+
+local uint MAXPAGES = 1000; // TODO gernerate a random number
+local uint currpage = 1; // starting at 1, for the page sequence number
+
+typedef struct {
+    local int64 start_pos = FTell(); // remeber the start of the page for the checksum later
+    CHAR    CapturePattern[4];  // must be 'OGGS'  
+    BYTE    Version;            // must be 0
+
+    // 2 -> not first | 1 -> first | 4 -> last
+    if(currpage == 0) {
+        BYTE    HeaderType = { 1 };
+    } else if (currpage == MAXPAGES) {
+        BYTE    HeaderType = { 4 };
+    } else {
+        BYTE    HeaderType = { 2 };
+    }
+
+
+    QUAD    GranulePosition;
+    DWORD   BitstreamSerial;
+    DWORD   PageSequenceNumber = {currpage}; 
+    
+    // handle checksum    
+    local int64 header_size = FTell() - start_pos; 
+    local uint32 crc_calc = Checksum(CHECKSUM_CRC32, start_pos, header_size);
+    DWORD   Checksum = { crc_calc } <fgcolor=cDkPurple>;
+    UBYTE   PageSegments = {1};
+    
+    // generate the array of segment lenghts
+    UBYTE   SegmentLen;
+
+    // ## explanation ##
+    // FormatFuzzer cannot influcence the single UBYTES that are within an array, but the size of any array must be limited ( < 128 in my tests)
+    // the only way to generate any valid .ogg is therefore to limit the number of Segments to one per page. Because this is the only way, 
+    // the second array may be influenced to always be less than 128 elements long.
+    
+    // generate an array called data with the length that was defined by the pageSegments array at the correct position 
+    local uint i;
+    for (i = 0; i < PageSegments; i++) {
+        struct {
+              BYTE Data[SegmentLen] <bgcolor=cLtGray>;        
+        } Segment;
+    }
+
+
+} PAGE;
+
+
+LittleEndian(); 
+
+
+while( !FEof() ) {
+    
+    Printf("generate page %3d / %d | bits used: %d\n", currpage, MAXPAGES, FTell());  
+
+    if (MAXPAGES < currpage) 
+    {
+        Printf("Max Pages of %d reached!\n", MAXPAGES);
+        return 0;
+    }
+
+    local int evilBit = SetEvilBit(false);
+    PAGE page <bgcolor=cLtBlue>;
+    SetEvilBit(evilBit);
+    
+    // Check for valid header -> mining magic values
+    if ( page.CapturePattern != "OggS" || page.Version != 0)
+    {
+        Warning( "File is not a valid ogg file. Template stopped." );
+        return -1;
+    }
+
+  currpage+=1;
+} 

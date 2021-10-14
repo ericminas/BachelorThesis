@@ -1,0 +1,23 @@
+./ffcompile templates/ogg.bt ogg.cpp
+Finished creating cpp generator.
+
+Mined interesting values:
+
+CapturePattern: ['"OggS"']
+Version: ['0']
+
+File stat functions found:
+
+FEof
+
+g++ -std=c++17 -DHAVE_CONFIG_H -I.     -g -O3 -Wall -MT ogg.o -MD -MP -MF .deps/ogg.Tpo -c -o ogg.o ogg.cpp
+ogg.cpp: In member function ‘PAGE* PAGE::generate()’:
+ogg.cpp:502:60: error: no matching function for call to ‘PAGE::Checksum(const int&, int64&, int64&)’
+  502 |  crc_calc = Checksum(CHECKSUM_CRC32, start_pos, header_size);
+      |                                                            ^
+ogg.cpp:348:8: note: candidate: ‘DWORD PAGE::Checksum()’
+  348 |  DWORD Checksum() {
+      |        ^~~~~~~~
+ogg.cpp:348:8: note:   candidate expects 0 arguments, 3 provided
+make: *** [Makefile:410: ogg.o] Error 1
+
