@@ -15,7 +15,7 @@
 
 #define MAX_FILE_SIZE 100000; // #pages * 2075 bytes (=> max size per page with 1 segment)
 
-local uint MAXPAGES = 1000; // TODO gernerate a random number
+local uint MAXPAGES = 100; 
 local uint currpage = 1; // starting at 1, for the page sequence number
 
 typedef struct {
@@ -23,24 +23,21 @@ typedef struct {
     CHAR    CapturePattern[4];  // must be 'OGGS'  
     BYTE    Version;            // must be 0
 
-    // 2 -> not first | 1 -> first | 4 -> last
-    if(currpage == 0) {
-        BYTE    HeaderType = { 1 };
-    } else if (currpage == MAXPAGES) {
+    if (currpage == MAXPAGES) {
         BYTE    HeaderType = { 4 };
     } else {
         BYTE    HeaderType = { 2 };
     }
 
 
-    QUAD    GranulePosition;
-    DWORD   BitstreamSerial;
+    QUAD    GranulePosition; // is only important for seeking functions within ogg interpreters.
+    DWORD   BitstreamSerial = { currpage }; // each page is it's own stream
     DWORD   PageSequenceNumber = {currpage}; 
     
     // handle checksum    
     local int64 header_size = FTell() - start_pos; 
     local uint32 crc_calc = Checksum(CHECKSUM_CRC32, start_pos, header_size);
-    DWORD   Checksum = { crc_calc } <fgcolor=cDkPurple>;
+    DWORD   HeaderChecksum = { crc_calc } <fgcolor=cDkPurple>;
     UBYTE   PageSegments = {1};
     
     // generate the array of segment lenghts
@@ -59,8 +56,66 @@ typedef struct {
         } Segment;
     }
 
-
 } PAGE;
+
+
+typedef struct {
+    local int64 start_pos = FTell(); // remeber the start of the page for the checksum later
+    CHAR    CapturePattern[4];          // must be 'OGGS'  
+    BYTE    Version;                    // must be 0
+    BYTE    HeaderType = { 1 };         // always the first page
+    QUAD    GranulePosition = { 0 };    // because there is no data on this page
+    DWORD   BitStreamSerial = { currpage };
+    
+    // handle checksum    
+    //local int64 header_size = FTell() - start_pos; 
+    //local uint32 crc_calc = Checksum(CHECKSUM_CRC32, start_pos, header_size);
+    //DWORD   HeaderChecksum = { crc_calc } <fgcolor=cDkPurple>;
+    
+    UBYTE   PageSegments = { 1 };       // this page only has the codec
+    UBYTE   SegmentLen = { 30 };        // codec needs 30 bit
+
+    // define the codec
+    //BYTE Data[SegmentLen];
+  /*  local BYTE _Data[] = {
+        0x0001,     
+        0x0076,     
+        0x006F,     
+        0x0072,     
+        0x0062,     
+        0x0069,     
+        0x0073,     
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0002,
+        0x0001,
+        0x007D,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0010, // error?
+        0x0014, // error? 
+        0x0001,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0000,
+        0x0018, // error?
+        0x0001
+    };
+
+    BYTE Data[SegmentLen] = { _Data };
+*/
+    BYTE HeaderData[SegmentLen];
+    
+} INITIALPAGE;
 
 
 LittleEndian(); 
@@ -68,7 +123,51 @@ LittleEndian();
 
 while( !FEof() ) {
     
-    Printf("generate page %3d / %d | bits used: %d\n", currpage, MAXPAGES, FTell());  
+    // generate the intial page with the codec
+    if ( currpage == 1) {
+        INITIALPAGE initialPage;
+   
+      /*  if (initialPage.Data[ 0] != 0x0001 ||   // 1
+            initialPage.Data[ 1] != 0x0076 ||   // "v"
+            initialPage.Data[ 2] != 0x006F ||   // "o"
+            initialPage.Data[ 3] != 0x0072 ||   // "r"
+            initialPage.Data[ 4] != 0x0062 ||   // "b"
+            initialPage.Data[ 5] != 0x0069 ||   // "i"
+            initialPage.Data[ 6] != 0x0073 ||   // "s"
+            initialPage.Data[ 7] != 0x0000 ||
+            initialPage.Data[ 8] != 0x0000 ||
+            initialPage.Data[ 9] != 0x0000 ||
+            initialPage.Data[10] != 0x0000 ||
+            initialPage.Data[11] != 0x0002 ||
+            initialPage.Data[12] != 0x0001 ||
+            initialPage.Data[13] != 0x007D ||   // "}"
+            initialPage.Data[14] != 0x0000 ||
+            initialPage.Data[15] != 0x0000 ||
+            initialPage.Data[16] != 0x0000 ||
+            initialPage.Data[17] != 0x0000 ||
+            initialPage.Data[18] != 0x0000 ||
+            initialPage.Data[19] != 0x0000 ||
+            initialPage.Data[20] != 0x00Co ||
+            initialPage.Data[21] != 0x00D4 ||
+            initialPage.Data[22] != 0x0001 ||
+            initialPage.Data[23] != 0x0000 ||
+            initialPage.Data[24] != 0x0000 ||
+            initialPage.Data[25] != 0x0000 ||
+            initialPage.Data[26] != 0x0000 ||
+            initialPage.Data[27] != 0x0000 ||
+            initialPage.Data[28] != 0x0000 ||
+            initialPage.Data[29] != 0x00B8 ||
+            initialPage.Data[30] != 0x0001 ||'
+            ) {
+                return -1;
+            }*/
+
+        currpage++;
+        continue;
+    }
+
+    
+    Printf("generate page %3d / %d | bits used: %d\n", currpage, MAXPAGES, FileSize());  
 
     if (MAXPAGES < currpage) 
     {
@@ -88,4 +187,6 @@ while( !FEof() ) {
     }
 
   currpage+=1;
-} 
+}
+
+Printf("---> generating .ogg finished, created %d pages with overall file size: %d Bit\n", currpage - 1, FileSize());

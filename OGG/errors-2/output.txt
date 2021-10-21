@@ -4,20 +4,24 @@ Finished creating cpp generator.
 Mined interesting values:
 
 CapturePattern: ['"OggS"']
+HeaderData: {'0': ['1']}
 Version: ['0']
 
 File stat functions found:
 
 FEof
+FileSize
 
 g++ -std=c++17 -DHAVE_CONFIG_H -I.     -g -O3 -Wall -MT ogg.o -MD -MP -MF .deps/ogg.Tpo -c -o ogg.o ogg.cpp
-ogg.cpp: In member function ‘PAGE* PAGE::generate()’:
-ogg.cpp:502:60: error: no matching function for call to ‘PAGE::Checksum(const int&, int64&, int64&)’
-  502 |  crc_calc = Checksum(CHECKSUM_CRC32, start_pos, header_size);
-      |                                                            ^
-ogg.cpp:348:8: note: candidate: ‘DWORD PAGE::Checksum()’
-  348 |  DWORD Checksum() {
-      |        ^~~~~~~~
-ogg.cpp:348:8: note:   candidate expects 0 arguments, 3 provided
+ogg.cpp: In constructor ‘globals_class::globals_class()’:
+ogg.cpp:543:27: error: call of overloaded ‘BYTE_array_class(BYTE_class&, <brace-enclosed initializer list>)’ is ambiguous
+  543 |   page(PAGE_page_instances)
+      |                           ^
+ogg.cpp:226:2: note: candidate: ‘BYTE_array_class::BYTE_array_class(BYTE_class&, std::vector<std::__cxx11::basic_string<char> >)’
+  226 |  BYTE_array_class(BYTE_class& element, std::vector<std::string> known_values)
+      |  ^~~~~~~~~~~~~~~~
+ogg.cpp:224:2: note: candidate: ‘BYTE_array_class::BYTE_array_class(BYTE_class&, std::unordered_map<int, std::vector<char> >)’
+  224 |  BYTE_array_class(BYTE_class& element, std::unordered_map<int, std::vector<BYTE>> element_known_values = {})
+      |  ^~~~~~~~~~~~~~~~
 make: *** [Makefile:410: ogg.o] Error 1
 
