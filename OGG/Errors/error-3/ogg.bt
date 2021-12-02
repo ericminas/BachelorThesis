@@ -1,0 +1,158 @@
+//------------------------------------------------
+//--- 010 Editor v4.0.4 Binary Template
+//
+//      File: OGG.bt
+//   Authors: George Woods
+//   Version: 1.1
+//   Purpose: Parses the ogg container format.
+//  Category: Audio
+// File Mask: *.ogg,*.oga,*.ogv,*.ogx
+//  ID Bytes: 4F 67 67 53 //OggS
+//   History: 
+//   1.1   2016-01-28 SweetScape: Updated header for repository submission.
+//   1.0   GS: Initial release.
+//------------------------------------------------
+
+#define MAX_FILE_SIZE 100000; // #pages * 2075 bytes (=> max size per page with 1 segment)
+
+local uint MAXPAGES = 100; 
+local uint currpage = 1; // starting at 1, for the page sequence number
+
+typedef struct {
+    local int64 start_pos = FTell(); // remeber the start of the page for the checksum later
+    CHAR    CapturePattern[4];  // must be 'OGGS'  
+    BYTE    Version;            // must be 0
+
+    if (currpage == MAXPAGES) {
+        BYTE    HeaderType = { 4 };
+    } else {
+        BYTE    HeaderType = { 2 };
+    }
+
+
+    QUAD    GranulePosition; // is only important for seeking functions within ogg interpreters.
+    DWORD   BitstreamSerial = { currpage }; // each page is it's own stream
+    DWORD   PageSequenceNumber = {currpage}; 
+    
+    // handle checksum    
+    local int64 header_size = FTell() - start_pos; 
+    local uint32 crc_calc = Checksum(CHECKSUM_CRC32, start_pos, header_size);
+    DWORD   HeaderChecksum = { crc_calc } <fgcolor=cDkPurple>;
+    UBYTE   PageSegments = {1};
+    
+    // generate the array of segment lenghts
+    UBYTE   SegmentLen;
+
+    // ## explanation ##
+    // FormatFuzzer cannot influcence the single UBYTES that are within an array, but the size of any array must be limited ( < 128 in my tests)
+    // the only way to generate any valid .ogg is therefore to limit the number of Segments to one per page. Because this is the only way, 
+    // the second array may be influenced to always be less than 128 elements long.
+    
+    // generate an array called data with the length that was defined by the pageSegments array at the correct position 
+    local uint i;
+    for (i = 0; i < PageSegments; i++) {
+        struct {
+              BYTE Data[SegmentLen] <bgcolor=cLtGray>;        
+        } Segment;
+    }
+
+} PAGE;
+
+
+typedef struct {
+    local int64 start_pos = FTell(); // remeber the start of the page for the checksum later
+    CHAR    CapturePattern[4];          // must be 'OGGS'  
+    BYTE    Version;                    // must be 0
+    BYTE    HeaderType = { 1 };         // always the first page
+    QUAD    GranulePosition = { 0 };    // because there is no data on this page
+    DWORD   BitStreamSerial = { currpage };
+    DWORD   PageSequenceNumber = {currpage}; 
+    
+    // handle checksum    
+    local int64 header_size = FTell() - start_pos; 
+    local uint32 crc_calc = Checksum(CHECKSUM_CRC32, start_pos, header_size);
+    DWORD   HeaderChecksum = { crc_calc } <fgcolor=cDkPurple>;
+    
+    UBYTE   PageSegments = { 1 };       // this page only has the codec
+    UBYTE   SegmentLen = { 30 };        // codec needs 30 bit
+
+    // define the codec
+    struct {
+        BYTE HeaderData[SegmentLen] <bgcolor=cLtGray>;
+    } HeaderSegment;
+    
+} INITIALPAGE;
+
+
+LittleEndian(); 
+
+
+while( !FEof() ) {
+    
+    // generate the intial page with the codec
+    if ( currpage == 1) {
+        INITIALPAGE initialPage;
+  
+    
+        if (initialPage.HeaderSegment.HeaderData[ 0] != 0x0001 ||   // 1    ----|
+            initialPage.HeaderSegment.HeaderData[ 1] != 0x0076 ||   // "v"      |
+            initialPage.HeaderSegment.HeaderData[ 2] != 0x006F ||   // "o"      |
+            initialPage.HeaderSegment.HeaderData[ 3] != 0x0072 ||   // "r"      |
+            initialPage.HeaderSegment.HeaderData[ 4] != 0x0062 ||   // "b"      | The same for all packets.
+            initialPage.HeaderSegment.HeaderData[ 5] != 0x0069 ||   // "i"      |
+            initialPage.HeaderSegment.HeaderData[ 6] != 0x0073 ||   // "s"      |   
+            initialPage.HeaderSegment.HeaderData[ 7] != 0x0000 ||   // 0    ----|
+            initialPage.HeaderSegment.HeaderData[ 8] != 0x0000 ||   // 0    --------|    
+            initialPage.HeaderSegment.HeaderData[ 9] != 0x0000 ||   // 0            | audio channels ( = 2 )
+            initialPage.HeaderSegment.HeaderData[10] != 0x0000 ||   // 0            |
+            initialPage.HeaderSegment.HeaderData[11] != 0x0002 ||   // 2    --------|
+            initialPage.HeaderSegment.HeaderData[12] != 0x0044 ||   //      ----|
+            initialPage.HeaderSegment.HeaderData[13] != 0x00AC ||   //          | bit rate
+            initialPage.HeaderSegment.HeaderData[14] != 0x0000 ||   //          |
+            initialPage.HeaderSegment.HeaderData[15] != 0x0000 ||   //      ----|
+            initialPage.HeaderSegment.HeaderData[16] != 0x0000 ||   //      --------|
+            initialPage.HeaderSegment.HeaderData[17] != 0x0000 ||   //              | bitrate maximum
+            initialPage.HeaderSegment.HeaderData[18] != 0x0000 ||   //              |
+            initialPage.HeaderSegment.HeaderData[19] != 0x0000 ||   //      --------|
+            initialPage.HeaderSegment.HeaderData[20] != 0x0003 ||   //      ----|
+            initialPage.HeaderSegment.HeaderData[21] != 0x0071 ||   //          | bitrate nominal
+            initialPage.HeaderSegment.HeaderData[22] != 0x0002 ||   //          |
+            initialPage.HeaderSegment.HeaderData[23] != 0x0000 ||   //      ----| 
+            initialPage.HeaderSegment.HeaderData[24] != 0x0000 ||   //      --------|
+            initialPage.HeaderSegment.HeaderData[25] != 0x0000 ||   //              | bitrate minumum
+            initialPage.HeaderSegment.HeaderData[26] != 0x0000 ||   //              |
+            initialPage.HeaderSegment.HeaderData[27] != 0x0000 ||   //      --------| 
+            initialPage.HeaderSegment.HeaderData[28] != 0x00B8 ||   // -72          The same for all packets.
+            initialPage.HeaderSegment.HeaderData[29] != 0x0001      // 1            The same for all packets.
+            ) {
+                //return 0;
+            }
+
+        currpage++;
+        continue;
+    }
+
+    
+    Printf("generate page %3d / %d | bits used: %d\n", currpage, MAXPAGES, FileSize());  
+
+    if (MAXPAGES < currpage) 
+    {
+        Printf("Max Pages of %d reached!\n", MAXPAGES);
+        return 0;
+    }
+
+    local int evilBit = SetEvilBit(false);
+    PAGE page <bgcolor=cLtBlue>;
+    SetEvilBit(evilBit);
+    
+    // Check for valid header -> mining magic values
+    if ( page.CapturePattern != "OggS" || page.Version != 0)
+    {
+        Warning( "File is not a valid ogg file. Template stopped." );
+        return -1;
+    }
+
+  currpage+=1;
+}
+
+Printf("---> generating .ogg finished, created %d pages with overall file size: %d Bit\n", currpage - 1, FileSize());
