@@ -60,33 +60,46 @@ typedef struct {
 
 
 typedef struct {
-    local int64 start_pos = FTell(); // remeber the start of the page for the checksum later
-    CHAR    CapturePattern[4];          // must be 'OGGS'  
-    BYTE    Version;                    // must be 0
-    BYTE    HeaderType = { 1 };         // always the first page
-    QUAD    GranulePosition = { 0 };    // because there is no data on this page
-    DWORD   BitStreamSerial = { currpage };
-    DWORD   PageSequenceNumber = {currpage}; 
+    local int64 start_pos = FTell();        // remeber the start of the page for the checksum later
+    CHAR        CapturePattern[4];          // must be 'OGGS'  
+    BYTE        Version;                    // must be 0
+    BYTE        HeaderType = { 2 };         // always the first page
+    QUAD        GranulePosition = { 0 };    // because there is no data on this page
+    DWORD       BitStreamSerial = { 1229047502 };
+    DWORD       PageSequenceNumber = { 0 }; 
     
     // handle checksum    
-    local int64 header_size = FTell() - start_pos; 
-    local uint32 crc_calc = Checksum(CHECKSUM_CRC32, start_pos, header_size);
-    DWORD   HeaderChecksum = { crc_calc } <fgcolor=cDkPurple>;
-    
-    UBYTE   PageSegments = { 1 };       // this page only has the codec
-    UBYTE   SegmentLen = { 30 };        // codec needs 30 bit
+    local int64 checksum_pos = FTell();     // rember the position of the checksum
+    //DWORD       Checksum = { 0 };
+    DWORD       Checksum = { 1039366512 };    
+
+    UBYTE       PageSegments = { 1 };       // this page only has the codec
+    UBYTE       SegmentLen = { 30 };        // codec needs 30 bit
 
     // define the codec
     struct {
-        //UBYTE HeaderData[SegmentLen] <bgcolor=cLtGray>;
-		CHAR[] HeaderData[SegmentLen] <bgcolor=cLtGray>;
+        UBYTE   HeaderData[SegmentLen] <bgcolor=cLtGray>;
+		//CHAR[] HeaderData[SegmentLen] <bgcolor=cLtGray>;
     } HeaderSegment;
+    
+    // calculate the checksum
+    // -> jump to checksum
+ /*   local int64  end_pos = FTell(); 
+    local uint32 crc = Checksum(CHECKSUM_CRC32, 0, 58);
+    FSeek(checksum_pos);
+
+    Printf("start: %d, End: %d, length: %d\n", start_pos, end_pos-start_pos);
+
+    DWORD Checksum = { 99 };
+    // -> jump back to the end of the page
+    FSeek(end_pos); */
     
 } Vorbis_Codec;
 
 
 LittleEndian(); 
 
+FileSize();
 
 while( !FEof() ) {
     
@@ -95,11 +108,11 @@ while( !FEof() ) {
         Vorbis_Codec vorbis_codec;
   
     
-		if(vorbis_codec.HeaderSegment.HeaderData != "\x01\x76\x6F\x72\x62\x69\x73\x00\x00\x00\x00\x02\x44\xAC\x00\x00\x00\x00\x00\x03\x71\x02\x00\x00\x00\x00\x00\xB8\x01") {
+		/*if(vorbis_codec.HeaderSegment.HeaderData != "\x01\x76\x6F\x72\x62\x69\x73\x00\x00\x00\x00\x02\x44\xAC\x00\x00\x00\x00\x00\x03\x71\x02\x00\x00\x00\x00\x00\xB8\x01") {
 			return 0;
-		}
+		}*/
 
-       /* if (vorbis_codec.HeaderSegment.HeaderData[ 0] != 0x0001 ||   // 1    ----|
+       if (vorbis_codec.HeaderSegment.HeaderData[ 0] != 0x0001 ||   // 1    ----|
             vorbis_codec.HeaderSegment.HeaderData[ 1] != 0x0076 ||   // "v"      |
             vorbis_codec.HeaderSegment.HeaderData[ 2] != 0x006F ||   // "o"      |
             vorbis_codec.HeaderSegment.HeaderData[ 3] != 0x0072 ||   // "r"      |
@@ -131,14 +144,14 @@ while( !FEof() ) {
             vorbis_codec.HeaderSegment.HeaderData[29] != 0x0001      // 1            The same for all packets.
             ) {
                 //return 0;
-            }*/
+            }
 
         currpage++;
         continue;
     }
 
     
-    Printf("generate page %3d / %d | bits used: %d\n", currpage, MAXPAGES, FileSize());  
+    Printf("generate page %3d / %d\n", currpage, MAXPAGES);  
 
     if (MAXPAGES < currpage) 
     {
@@ -153,7 +166,7 @@ while( !FEof() ) {
     // Check for valid header -> mining magic values
     if ( page.CapturePattern != "OggS" || page.Version != 0)
     {
-        Warning( "File is not a valid ogg file. Template stopped." );
+        Warning( "File is not a valid ogg file. Template stopped @page: %d.", currpage );
         return -1;
     }
 
