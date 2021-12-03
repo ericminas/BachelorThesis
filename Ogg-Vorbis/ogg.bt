@@ -95,7 +95,7 @@ while( !FEof() ) {
         Vorbis_Codec vorbis_codec;
   
     
-		if(vorbis_codec.HeaderSegment.HeaderData != "\x001\x") {
+		if(vorbis_codec.HeaderSegment.HeaderData != "\x01\x76\x6F\x72\x62\x69\x73\x00\x00\x00\x00\x02\x44\xAC\x00\x00\x00\x00\x00\x03\x71\x02\x00\x00\x00\x00\x00\xB8\x01") {
 			return 0;
 		}
 
