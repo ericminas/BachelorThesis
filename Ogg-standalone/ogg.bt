@@ -59,11 +59,39 @@ typedef struct {
 } PAGE;
 
 
+typedef struct {
+    local int64 start_pos = FTell(); // remeber the start of the page for the checksum later
+    CHAR    CapturePattern[4];          // must be 'OGGS'  
+    BYTE    Version;                    // must be 0
+    BYTE    HeaderType = { 1 };         // always the first page
+    QUAD    GranulePosition = { 0 };    // because there is no data on this page
+    DWORD   BitStreamSerial = { currpage };
+    DWORD   PageSequenceNumber = {currpage}; 
+    
+    // handle checksum    
+    local int64 header_size = FTell() - start_pos; 
+    local uint32 crc_calc = Checksum(CHECKSUM_CRC32, start_pos, header_size);
+    DWORD   HeaderChecksum = { crc_calc } <fgcolor=cDkPurple>;
+    
+    UBYTE   PageSegments = { 1 };       // this page only has the codec
+    UBYTE   SegmentLen = { 30 };        // codec needs 30 bit
+
+    // define the codec
+    struct {
+        BYTE HeaderData[SegmentLen] <bgcolor=cLtGray>;
+    } HeaderSegment;
+    
+} INITIALPAGE;
+
+
 LittleEndian(); 
 
 
 while( !FEof() ) {
     
+   
+    Printf("generate page %3d / %d | bits used: %d\n", currpage-1, MAXPAGES, FileSize());  
+
     if (MAXPAGES < currpage) 
     {
         Printf("Max Pages of %d reached!\n", MAXPAGES);
@@ -83,3 +111,5 @@ while( !FEof() ) {
 
   currpage+=1;
 }
+
+Printf("---> generating .ogg finished, created %d pages with overall file size: %d Bit\n", currpage - 1, FileSize());
