@@ -1,0 +1,120 @@
+//------------------------------------------------
+//--- 010 Editor v11.0.1 Binary Template
+//
+//      File: flac.bt
+//   Authors: Eric Minas
+//   Version: 1.0
+//   Purpose: parsing .flac files 
+//  Category: Audio
+// File Mask: *.flac
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#define MAX_FILE_SIZE 1000000;
+
+
+// define unusual variables
+typedef BYTE    oneBit          <read=readOneBit>;
+typedef BYTE    threeBits       <read=readThreeBits>;
+typedef BYTE    fiveBits        <read=readFiveBits>;
+typedef BYTE    sevenBits       <read=readSevenBits>;
+typedef DWORD   twentyBits      <read=readTwentyBits>;
+typedef QWORD   thirtySixBits   <read=readThirtysixBits>;
+
+// define custum variables read functions
+
+
+// > META_DATA sub structs
+typedef struct {
+    BYTE lastBlock : 1;
+    BYTE blockType : 7;       
+    UINT length;            // the length of the block_data
+} METADATA_BLOCK_HEADER;
+
+typedef struct {
+    WORD min_block_size;    // 16 bit
+    WORD max_block_size;    // 16 bit
+    WORD min_frame_size;    // 24 bit
+    WORD max_frame_size;    // 24 bit
+    QWORD sample_rate       : 20;
+    QWORD num_channels      : 3;
+    QWORD bits_per_sample   : 5; // -> length of each subframe_constant block
+    QWORD num_samples       : 36; // -> total length
+    CHAR md5_signature[128];// 128 bit
+   // CHAR md5_signature[64];
+} METADATA_BLOCK_DATA_STREAMINFO; 
+
+typedef struct {
+    UBYTE padding;
+
+} METADATA_BLOCK_DATA_PADDING;
+
+
+typedef struct {
+    METADATA_BLOCK_HEADER header;
+    
+    // TODO find the padding meta_data_clocks
+    METADATA_BLOCK_DATA_STREAMINFO streamInfo;   
+
+   
+    
+
+} METADATA_BLOCK;
+
+
+typedef struct {
+    struct {
+        BYTE zero_padding   : 1;     
+        BYTE type           : 6;      
+        BYTE wastedBits     : 1;        
+    } SUBFRAME_HEADER;             
+
+     struct {
+        CHAR data;              // 0 - Infinity bit
+    } SUBFRAME_CONSTANT;
+
+} SUBFRAME;
+
+
+typedef struct {
+    WORD sync_code          : 14;
+    WORD reserved_1         : 1;
+    WORD blocking_strategy  : 1;
+
+    WORD block_size         : 4;
+    WORD sample_rate        : 4;
+    WORD channel_assignment : 4;
+    WORD sample_size        : 3;
+    WORD reserved_2         : 1;  
+
+    DWORD coded_frame_number; // 31 bit -> moved to 32
+    // hope that block_size != 011x && sample_rate != 11xx
+    UCHAR CRC_8;
+} FRAME_HEADER;
+
+typedef struct {
+    FRAME_HEADER header;
+SUBFRAME sub_frame <bgcolor=cSilver>;
+       
+    
+    typedef struct {
+        // TODO add CRC-16 of the whole frame
+    } FRAME_FOOTER;
+
+} FRAME;
+
+
+LittleEndian(); 
+
+// actual parsing
+
+CHAR CapturePattern[4]; // fLaC
+
+// <-- add acceptance for multiple metadata blocks
+METADATA_BLOCK metadata_block <bgcolor=cLtGreen>;
+// -->
+
+// <-- add acceptance for multiple Frames
+FRAME frame <bgcolor=cLtBlue>;
+// -->
