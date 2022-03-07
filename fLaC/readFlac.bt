@@ -71,7 +71,8 @@ typedef struct {
     } SUBFRAME_HEADER;             
 
      struct {
-        CHAR data;              // 0 - Infinity bit
+        //WORD data;              // 0 - Infinity bit
+        CHAR data[128];
     } SUBFRAME_CONSTANT;
 
 } SUBFRAME;
@@ -95,7 +96,7 @@ typedef struct {
 
 typedef struct {
     FRAME_HEADER header;
-SUBFRAME sub_frame <bgcolor=cSilver>;
+    SUBFRAME sub_frame <bgcolor=cSilver>;
        
     
     typedef struct {

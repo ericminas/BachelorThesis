@@ -14,78 +14,64 @@
 #define MAX_FILE_SIZE 1000000;
 
 
-
-
 typedef struct {
-	UBYTE last_block__and__block_type = {0x80};  // -> last meta data block, type = streamInfo
-	UINT length;			// the length of the block_data // TODO add this
-} METADATA_BLOCK_HEADER;
 
-   
+    struct METADATA_BLOCK_HEADER{
+    // TODO split this var into 2 and set the magic values further down
+        UBYTE last_block__and__block_type = {0x80};  // -> last meta data block, type = streamInfo
+        UINT length;			// the length of the block_data // TODO add this
+    } header;
 
-typedef struct {
-	WORD min_block_size = {0x18}; 
-	WORD max_block_size = {0x18};	
-	WORD min_frame_size = {0x00};	 
-	WORD max_frame_size = {0x00};  
+    struct METADATA_BLOCK_DATA_STREAMINFO{
+        WORD min_block_size = {0x18}; 
+	    WORD max_block_size = {0x18};	
+	    WORD min_frame_size = {0x00};	 
+	    WORD max_frame_size = {0x00};  
 
-    struct PacketBitField{
         QWORD sample_rate       : 20;
         QWORD num_channels      : 3;
         QWORD bits_per_sample   : 5;  // -> length of each subframe_constant block
         QWORD num_samples       : 36; 
-    } pbf;
     
-    CHAR md5_signature[128]; // TODO get the actual checksum
-} METADATA_BLOCK_DATA_STREAMINFO; 
-
-typedef struct {
-// TODO move structs in here
-	METADATA_BLOCK_HEADER header;
-	METADATA_BLOCK_DATA_STREAMINFO streamInfo;	 
+        CHAR md5_signature[128]; // TODO get the actual checksum
+    } streamInfo;
+ 
 } METADATA_BLOCK;
 
-LittleEndian(); 
+typedef struct {
+    struct SUBFRAME_HEADER{
+        BYTE zero_padding   : 1;     
+        BYTE type           : 6;      
+        BYTE wastedBits     : 1;        
+    } header; 
+
+     struct {
+        //WORD data;              // 0 - Infinity bit
+        CHAR data[128];
+    } SUBFRAME_CONSTANT;
+} SUB_FRAME;
 
 typedef struct {
-        // 1111 1111 1000
-        
-        //WORD Sync_blocking = {0xFFF8};
+    struct FRAME_HEADER{
+        WORD sync_code          : 14;
+        WORD reserved_1         : 1;
+        WORD blocking_strategy  : 1;
 
-        // block_size ->    010x
-        // sample_size ->   01xx
-        struct Header_PBF_1 {
-            WORD sync_code          : 14;
-            WORD reserved           : 1;
-            WORD blocking_strategy  : 1;
-        } header_pbf_1;
+        WORD block_size         : 4;
+        WORD sample_rate        : 4;
+        WORD channel_assignment : 4;
+        WORD sample_size        : 3;
+        WORD reserved_2         : 1;  
 
-        struct Header_PBF_2 {
-            WORD block_size         : 4;
-            WORD sample_rate        : 4;
-            WORD channel_assignment : 4;
-            WORD sample_size        : 3;
-            WORD reserved         : 1;
-        } header_pbf_2;
+        DWORD coded_frame_number;
+        UCHAR CRC_8; // TODO get the actual checksum
+    } header;
 
-
-/*WORD sync_code          : 14;
-    WORD reserved_1         : 1;
-    WORD blocking_strategy  : 1;
-
-    WORD block_size         : 4;
-    WORD sample_rate        : 4;
-    WORD channel_assignment : 4;
-    WORD sample_size        : 3;
-    WORD reserved_2         : 1;  */
-
-} FRAME_HEADER;
-
-typedef struct {
-    FRAME_HEADER header;
+    SUB_FRAME sub_frame;
 } FRAME;
 
 // build the file
+LittleEndian(); 
 //  # Capture pattern
 CHAR CapturePattern[4];
     if( CapturePattern != "fLaC") {return -1;}
@@ -94,23 +80,24 @@ CHAR CapturePattern[4];
 // # meta data
 METADATA_BLOCK metadata_block;
     
-    if(metadata_block.streamInfo.pbf.bits_per_sample != 0x10) {      
+    if(metadata_block.streamInfo.bits_per_sample != 0x10) {      
         return -1;
     }
 
 // # frame
 FRAME frame;
     
-    if(frame.header.header_pbf_1.sync_code != 0x1FE 
-        || frame.header.header_pbf_1.reserved != 0x0
-        || frame.header.header_pbf_1.blocking_strategy != 0x0
+    if(     frame.header.sync_code != 0x08FF // this should be 3FFE / FE3F in littleEndian, but it wont work then
+        ||  frame.header.reserved_1 != 0x0
+        ||  frame.header.blocking_strategy != 0x0
+        ||  frame.header.block_size != 0x5
+        ||  frame.header.sample_size != 0x5
+        ||  frame.header.reserved_2 != 0x0
       ) {return -1;}
 
-    if(frame.header.header_pbf_2.block_size != 0x5
-        || frame.header.header_pbf_2.sample_size != 0x4
-        || frame.header.header_pbf_2.sample_size != 0x5
-        || frame.header.header_pbf_2.sample_size != 0x6
-        || frame.header.header_pbf_2.sample_size != 0x7
-        || frame.header.header_pbf_2.reserved != 0x0
-      ) {return -1;} 
-return 0;
+    if(     frame.sub_frame.header.zero_padding != 0x0
+        ||  frame.sub_frame.header.type != 0x0
+        ||  frame.sub_frame.header.wastedBits != 0x0     
+      ) {return -1;}
+
+      
