@@ -71,8 +71,7 @@ typedef struct {
     } SUBFRAME_HEADER;             
 
      struct {
-        //WORD data;              // 0 - Infinity bit
-        CHAR data[128];
+        CHAR data[16];
     } SUBFRAME_CONSTANT;
 
 } SUBFRAME;
@@ -96,11 +95,14 @@ typedef struct {
 
 typedef struct {
     FRAME_HEADER header;
-    SUBFRAME sub_frame <bgcolor=cSilver>;
-       
     
-    typedef struct {
-        // TODO add CRC-16 of the whole frame
+    // parse sub_frames until a new frame is found
+    while(!FEof() && ReadByte() != -1) {
+        SUBFRAME sub_frame <bgcolor=cSilver>;
+    }   
+    
+    struct {
+        uint checksum;
     } FRAME_FOOTER;
 
 } FRAME;
@@ -112,10 +114,9 @@ LittleEndian();
 
 CHAR CapturePattern[4]; // fLaC
 
-// <-- add acceptance for multiple metadata blocks
 METADATA_BLOCK metadata_block <bgcolor=cLtGreen>;
-// -->
 
-// <-- add acceptance for multiple Frames
-FRAME frame <bgcolor=cLtBlue>;
-// -->
+while(!FEof()) {
+    FRAME frame <bgcolor=cLtBlue>;
+}
+

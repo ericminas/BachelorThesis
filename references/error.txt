@@ -1,0 +1,60 @@
+./ffcompile templates/flac.bt flac.cpp
+Traceback (most recent call last):
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1474, in _run
+    res = self._handle_node(self._ast, None, None, self._stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1583, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1631, in _handle_file_ast
+    self._handle_node(child, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1583, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 3848, in _handle_while
+    self._handle_node(node.stmt, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1583, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 3512, in _handle_compound
+    self._handle_node(child, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1583, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 2055, in _handle_decl
+    field._pfp__init(stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 151, in _pfp__init
+    self._pfp__interp._handle_node(decls, ctxt=self, stream=stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1583, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 2729, in _handle_struct_decls
+    self._handle_node(decl, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1583, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 2055, in _handle_decl
+    field._pfp__init(stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 151, in _pfp__init
+    self._pfp__interp._handle_node(decls, ctxt=self, stream=stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1583, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 2729, in _handle_struct_decls
+    self._handle_node(decl, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1583, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1903, in _handle_decl
+    val = self._handle_node(node.init, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 1583, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/interp.py", line 3435, in _handle_func_call
+    ret = func.call(func_args, ctxt, scope, stream, self, node.coord)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/functions.py", line 79, in call
+    res = self.func(args, ctxt, scope, stream, coord)
+  File "/home/eric/Thesis/FormatFuzzer/pfp/native/compat_tools.py", line 134, in Checksum
+    return checksum_types[alg](data, crc_init, crc_poly)
+TypeError: 'str' object is not callable
+
+-- Code --
+	local int64 frame_size = FTell() - frame_start; 
+        local uint32 crc_calc = Checksum(CHECKSUM_CRC16, frame_start, frame_size);
+        uint checksum = { crc_calc } <fgcolor=cDkPurple>;
+        
+-- Note --
+
+checksum_types[alg] resolves to  "CHECKSUM_CRC16",
+thus return checksum_types[alg](data, crc_init, crc_poly) resolves to
+return "CHECKSUM_CRC16"(data, crc_init, crc_poly) 

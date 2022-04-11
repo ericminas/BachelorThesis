@@ -13,13 +13,12 @@
 
 #define MAX_FILE_SIZE 1000000;
 
-
 typedef struct {
 
     struct METADATA_BLOCK_HEADER{
-    // TODO split this var into 2 and set the magic values further down
-        UBYTE last_block__and__block_type = {0x80};  // -> last meta data block, type = streamInfo
-        UINT length;			// the length of the block_data // TODO add this
+        // TODO split this var into 2 and set the magic values further down
+        UBYTE last_block__and__block_type = {0x80};     // -> last meta data block, type = streamInfo
+        UINT length;			                       // the length of the block_data // TODO add this
     } header;
 
     struct METADATA_BLOCK_DATA_STREAMINFO{
@@ -30,15 +29,15 @@ typedef struct {
 
         QWORD sample_rate       : 20;
         QWORD num_channels      : 3;
-        QWORD bits_per_sample   : 5;  // -> length of each subframe_constant block
+        QWORD bits_per_sample   : 5;        // -> length of each subframe_constant block
         QWORD num_samples       : 36; 
     
-        CHAR md5_signature[128]; // TODO get the actual checksum
+        CHAR md5_signature[128];            // TODO get the actual checksum
     } streamInfo;
  
 } METADATA_BLOCK;
 
-typedef struct {
+typedef struct{
     struct SUBFRAME_HEADER{
         BYTE zero_padding   : 1;     
         BYTE type           : 6;      
@@ -46,13 +45,13 @@ typedef struct {
     } header; 
 
      struct {
-        //WORD data;              // 0 - Infinity bit
-        CHAR data[128];
+        CHAR data[bits_per_sample];
     } SUBFRAME_CONSTANT;
 } SUB_FRAME;
 
 typedef struct {
-    struct FRAME_HEADER{
+    local int frame_start = FTell();
+    struct FRAME_HEADER{   
         WORD sync_code          : 14;
         WORD reserved_1         : 1;
         WORD blocking_strategy  : 1;
@@ -64,18 +63,41 @@ typedef struct {
         WORD reserved_2         : 1;  
 
         DWORD coded_frame_number;
+        
+        // compute checksum
+       // local uint32 checksum_result = 
         UCHAR CRC_8; // TODO get the actual checksum
+        
     } header;
 
-    SUB_FRAME sub_frame;
+    // create ten sub_frames for each channel per frame 
+    local int i = 0;
+    while( i < 10){
+      SUB_FRAME sub_frame;
+
+      if(   frame.sub_frame.header.zero_padding != 0x0
+        ||  frame.sub_frame.header.type         != 0x0
+        ||  frame.sub_frame.header.wastedBits   != 0x0     
+        ) {return -1;}
+      i = i +1;
+    }
+
+    struct FRAME_FOOTER {
+       // local uint32 crc_calc = Checksum(CHECKSUM_CRC16, frame_start, frame_start - FTell());
+       // uint checksum = {crc_calc}; 
+        local int64 frame_size = FTell() - frame_start; 
+        local uint32 crc_calc = Checksum(CHECKSUM_CRC16, frame_start, frame_size);
+        uint checksum = { crc_calc } <fgcolor=cDkPurple>;
+    } footer;
+
 } FRAME;
 
 // build the file
 LittleEndian(); 
+local int evilBit = SetEvilBit(false);
 //  # Capture pattern
 CHAR CapturePattern[4];
     if( CapturePattern != "fLaC") {return -1;}
-
 
 // # meta data
 METADATA_BLOCK metadata_block;
@@ -84,7 +106,8 @@ METADATA_BLOCK metadata_block;
         return -1;
     }
 
-// # frame
+// # frames
+while(!FEof()) {
 FRAME frame;
     
     if(     frame.header.sync_code != 0x08FF // this should be 3FFE / FE3F in littleEndian, but it wont work then
@@ -95,9 +118,5 @@ FRAME frame;
         ||  frame.header.reserved_2 != 0x0
       ) {return -1;}
 
-    if(     frame.sub_frame.header.zero_padding != 0x0
-        ||  frame.sub_frame.header.type != 0x0
-        ||  frame.sub_frame.header.wastedBits != 0x0     
-      ) {return -1;}
-
-      
+}
+  SetEvilBit(evilBit);
