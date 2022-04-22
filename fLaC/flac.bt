@@ -65,8 +65,8 @@ typedef struct {
         DWORD coded_frame_number;
         
         // compute checksum
-       // local uint32 checksum_result = 
-        UCHAR CRC_8; // TODO get the actual checksum
+        local UCHAR checksum_result = Checksum(CHECKSUM_CRC8, frame_start, FTell() - frame_start);
+        UCHAR CRC_8 = {checksum_result}; // TODO get the actual checksum
         
     } header;
 
@@ -83,11 +83,8 @@ typedef struct {
     }
 
     struct FRAME_FOOTER {
-       // local uint32 crc_calc = Checksum(CHECKSUM_CRC16, frame_start, frame_start - FTell());
-       // uint checksum = {crc_calc}; 
-        local int64 frame_size = FTell() - frame_start; 
-        local uint32 crc_calc = Checksum(CHECKSUM_CRC16, frame_start, frame_size);
-        uint checksum = { crc_calc } <fgcolor=cDkPurple>;
+        local WORD crc_calc = Checksum(CHECKSUM_CRC16, frame_start, FTell() - frame_start);
+        WORD checksum = { crc_calc } <fgcolor=cDkPurple>;
     } footer;
 
 } FRAME;

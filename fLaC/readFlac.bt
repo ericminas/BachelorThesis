@@ -14,17 +14,6 @@
 #define MAX_FILE_SIZE 1000000;
 
 
-// define unusual variables
-typedef BYTE    oneBit          <read=readOneBit>;
-typedef BYTE    threeBits       <read=readThreeBits>;
-typedef BYTE    fiveBits        <read=readFiveBits>;
-typedef BYTE    sevenBits       <read=readSevenBits>;
-typedef DWORD   twentyBits      <read=readTwentyBits>;
-typedef QWORD   thirtySixBits   <read=readThirtysixBits>;
-
-// define custum variables read functions
-
-
 // > META_DATA sub structs
 typedef struct {
     BYTE lastBlock : 1;
@@ -70,7 +59,8 @@ typedef struct {
         BYTE wastedBits     : 1;        
     } SUBFRAME_HEADER;             
 
-     struct {
+     struct {        
+// TODO reference doesn't work here!
         CHAR data[16];
     } SUBFRAME_CONSTANT;
 
@@ -88,6 +78,7 @@ typedef struct {
     WORD sample_size        : 3;
     WORD reserved_2         : 1;  
 
+// TODO does this need a bitfield with coded_frame_number:31 empty:1 && empty == 0?
     DWORD coded_frame_number; // 31 bit -> moved to 32
     // hope that block_size != 011x && sample_rate != 11xx
     UCHAR CRC_8;
@@ -97,12 +88,16 @@ typedef struct {
     FRAME_HEADER header;
     
     // parse sub_frames until a new frame is found
-    while(!FEof() && ReadByte() != -1) {
-        SUBFRAME sub_frame <bgcolor=cSilver>;
+        // TODO reference doesn't work here!
+//    local uint BytesPerSubFrame = 1 + bits_per_sample;
+    local uint BytesPerSubFrame = 1 + 16;
+    while ( !FEof() && (FTell() + BytesPerSubFrame) < FileSize() && ReadByte(FTell() + 2) != -1 && ReadByte(FTell() + 2) != 8){
+      SUBFRAME sub_frame <bgcolor=cSilver>;
     }   
+
     
     struct {
-        uint checksum;
+        WORD checksum;
     } FRAME_FOOTER;
 
 } FRAME;
@@ -119,4 +114,3 @@ METADATA_BLOCK metadata_block <bgcolor=cLtGreen>;
 while(!FEof()) {
     FRAME frame <bgcolor=cLtBlue>;
 }
-
