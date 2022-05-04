@@ -49,16 +49,21 @@ typedef struct {
  
 } METADATA_BLOCK;
 
-typedef struct{
+typedef struct (BYTE type) {
+   // Printf("create SUBFRAME with type %d\n", type);
+
     struct SUBFRAME_HEADER{
         BYTE zero_padding   : 1;     
         BYTE type           : 6;      
         BYTE wastedBits     : 1;        
     } header; 
 
+
+    // TODO switch over type
      struct {
         CHAR data[bits_per_sample];
     } SUBFRAME_CONSTANT;
+
 } SUB_FRAME;
 
 typedef struct {
@@ -85,10 +90,12 @@ typedef struct {
         
     } header;
 
-    // create ten sub_frames for each channel per frame 
+    // create 5 - 20 sub_frames per frame 
     local int i = 0;
-    while( i < 10){
-      SUB_FRAME sub_frame;
+    local UINT len = { 1, 2, 3, 4};
+    while( i < (len * 5)) {
+       // local int type = { 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
+        SUB_FRAME sub_frame(0);
 
       if(   frame.sub_frame.header.zero_padding != 0x0
         ||  frame.sub_frame.header.type         != 0x0
