@@ -1,0 +1,85 @@
+./ffcompile templates/flac.bt flac.cpp
+Traceback (most recent call last):
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1501, in _run
+    res = self._handle_node(self._ast, None, None, self._stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1658, in _handle_file_ast
+    self._handle_node(child, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 3933, in _handle_while
+    self._handle_node(node.stmt, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 3590, in _handle_compound
+    self._handle_node(child, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 2097, in _handle_decl
+    field._pfp__init(stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 151, in _pfp__init
+    self._pfp__interp._handle_node(decls, ctxt=self, stream=stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 2785, in _handle_struct_decls
+    self._handle_node(decl, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1939, in _handle_decl
+    field._pfp__set_value(val)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/fields.py", line 1679, in _pfp__set_value
+    promoted = self._pfp__promote(new_val)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/fields.py", line 1664, in _pfp__promote
+    if val < min_val:
+TypeError: '<' not supported between instances of 'list' and 'int'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/./ffcompile", line 16, in <module>
+    dom = pfp.parse(data="", template_file=sys.argv[1])
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/__init__.py", line 87, in parse
+    dom = interp.parse(
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1309, in parse
+    res = self._run(keep_successful)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1518, in _run
+    six.reraise(
+  File "/usr/lib/python3/dist-packages/six.py", line 718, in reraise
+    raise value.with_traceback(tb)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1501, in _run
+    res = self._handle_node(self._ast, None, None, self._stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1658, in _handle_file_ast
+    self._handle_node(child, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 3933, in _handle_while
+    self._handle_node(node.stmt, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 3590, in _handle_compound
+    self._handle_node(child, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 2097, in _handle_decl
+    field._pfp__init(stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 151, in _pfp__init
+    self._pfp__interp._handle_node(decls, ctxt=self, stream=stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 2785, in _handle_struct_decls
+    self._handle_node(decl, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1610, in _handle_node
+    res = self._node_switch[node.__class__](node, scope, ctxt, stream)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/interp.py", line 1939, in _handle_decl
+    field._pfp__set_value(val)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/fields.py", line 1679, in _pfp__set_value
+    promoted = self._pfp__promote(new_val)
+  File "/home/l1/Desktop/Thesis/FormatFuzzer/pfp/fields.py", line 1664, in _pfp__promote
+    if val < min_val:
+pfp.errors.PfpError: TypeError: '<' not supported between instances of 'list' and 'int'
+Exception at templates/flac.bt:95
+make: *** [Makefile:790: flac.cpp] Error 1
+
