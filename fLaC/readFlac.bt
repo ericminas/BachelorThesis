@@ -12,41 +12,28 @@
 //------------------------------------------------
 
 #define MAX_FILE_SIZE 1000000;
-
-
-// > META_DATA sub structs
-typedef struct {
-    BYTE lastBlock : 1;
-    BYTE blockType : 7;       
-    UINT length;            // the length of the block_data
-} METADATA_BLOCK_HEADER;
+local int meta_data_header_end;
 
 typedef struct {
-    WORD min_block_size;    // 16 bit
-    WORD max_block_size;    // 16 bit
-    WORD min_frame_size;    // 24 bit
-    WORD max_frame_size;    // 24 bit
-    QWORD sample_rate       : 20;
-    QWORD num_channels      : 3;
-    QWORD bits_per_sample   : 5; // -> length of each subframe_constant block
-    QWORD num_samples       : 36; // -> total length
-    CHAR md5_signature[128];// 128 bit
-   // CHAR md5_signature[64];
-} METADATA_BLOCK_DATA_STREAMINFO; 
+    struct METADATA_BLOCK_HEADER {
+        BYTE lastBlock : 1;
+        BYTE blockType : 7;       
+        UINT length;            // the length of the block_data
+    } header;
+    meta_data_header_end = FTell();
 
-typedef struct {
-    UBYTE padding;
-
-} METADATA_BLOCK_DATA_PADDING;
-
-
-typedef struct {
-    METADATA_BLOCK_HEADER header;
     
-    // TODO find the padding meta_data_clocks
-    METADATA_BLOCK_DATA_STREAMINFO streamInfo;   
-
-   
+    struct METADATA_BLOCK_DATA_STREAMINFO {
+        WORD min_block_size;    // 16 bit
+        WORD max_block_size;    // 16 bit
+        WORD min_frame_size;    // 24 bit
+        WORD max_frame_size;    // 24 bit
+        QWORD sample_rate       : 20;
+        QWORD num_channels      : 3;
+        QWORD bits_per_sample   : 5; // -> length of each subframe_constant block
+        QWORD num_samples       : 36; // -> total length
+        CHAR md5_signature[128];// 128 bit
+    } streaminfo;     
     
 
 } METADATA_BLOCK;
@@ -68,9 +55,10 @@ typedef struct {
 
 
 typedef struct {
-    WORD sync_code          : 14;
-    WORD reserved_1         : 1;
-    WORD blocking_strategy  : 1;
+    UBYTE sync_code_1;
+    UBYTE sync_code_2        : 6;
+    UBYTE reserved_1         : 1;
+    UBYTE blocking_strategy  : 1;
 
     WORD block_size         : 4;
     WORD sample_rate        : 4;
@@ -78,7 +66,6 @@ typedef struct {
     WORD sample_size        : 3;
     WORD reserved_2         : 1;  
 
-// TODO does this need a bitfield with coded_frame_number:31 empty:1 && empty == 0?
     DWORD coded_frame_number; // 31 bit -> moved to 32
     // hope that block_size != 011x && sample_rate != 11xx
     UCHAR CRC_8;
@@ -114,3 +101,14 @@ METADATA_BLOCK metadata_block <bgcolor=cLtGreen>;
 while(!FEof()) {
     FRAME frame <bgcolor=cLtBlue>;
 }
+
+//Printf("TEST\n");
+Printf("%d -> %d\n", meta_data_header_end, ReadByte(meta_data_header_end));
+
+local int num_bytes = 0;
+while(!FEof() && ReadByte(meta_data_header_end+num_bytes) != -1) {
+    Printf("read more, got bytes: %d at POS. %d, value: %d\n", num_bytes, meta_data_header_end+num_bytes, ReadByte(meta_data_header_end+num_bytes));
+    num_bytes = num_bytes + 1;
+}
+
+Printf("REACHED THE END!");
