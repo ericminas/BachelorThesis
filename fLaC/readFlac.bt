@@ -40,18 +40,32 @@ typedef struct {
 
 
 typedef struct {
-    struct {
+    struct SUBFRAME_HEADER{
         BYTE zero_padding   : 1;     
         BYTE type           : 6;      
         BYTE wastedBits     : 1;        
-    } SUBFRAME_HEADER;             
+    } header;             
+    Printf("SUBFRAME WITH TYPE %d\n", header.type);
 
-     struct {        
-// TODO reference doesn't work here!
-        CHAR data[16];
-    } SUBFRAME_CONSTANT;
+    // decide which subframe type was used
+     switch(header.type){
+        case 0x08:
+            struct {
+                CHAR data[16];
+            } SUBFRAME_CONSTANT;
+        break;
+        case 0x09:
+            struct {
+                CHAR data[16 * 5];
+            } SUBFRAME_VERBATIM;
+            break; 
+        default:
+            Printf("found type %d\n", header.type);
+    }
 
-} SUBFRAME;
+
+
+} SUB_FRAME;
 
 
 typedef struct {
@@ -79,7 +93,8 @@ typedef struct {
 //    local uint BytesPerSubFrame = 1 + bits_per_sample;
     local uint BytesPerSubFrame = 1 + 16;
     while ( !FEof() && (FTell() + BytesPerSubFrame) < FileSize() && ReadByte(FTell() + 2) != -1 && ReadByte(FTell() + 2) != 8){
-      SUBFRAME sub_frame <bgcolor=cSilver>;
+    Printf("parse Subframe\n");   
+     SUB_FRAME sub_frame <bgcolor=cSilver>;
     }   
 
     
@@ -101,14 +116,3 @@ METADATA_BLOCK metadata_block <bgcolor=cLtGreen>;
 while(!FEof()) {
     FRAME frame <bgcolor=cLtBlue>;
 }
-
-//Printf("TEST\n");
-Printf("%d -> %d\n", meta_data_header_end, ReadByte(meta_data_header_end));
-
-local int num_bytes = 0;
-while(!FEof() && ReadByte(meta_data_header_end+num_bytes) != -1) {
-    Printf("read more, got bytes: %d at POS. %d, value: %d\n", num_bytes, meta_data_header_end+num_bytes, ReadByte(meta_data_header_end+num_bytes));
-    num_bytes = num_bytes + 1;
-}
-
-Printf("REACHED THE END!");

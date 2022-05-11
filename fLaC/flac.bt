@@ -14,6 +14,7 @@
 #define MAX_FILE_SIZE 1000000;
 local int meta_Data_header_pos;
 local int meta_data_header_end;
+local int sub_frame_header_type_pos;
 
 typedef struct {
     struct METADATA_BLOCK_HEADER{
@@ -53,16 +54,28 @@ typedef struct (BYTE type) {
    // Printf("create SUBFRAME with type %d\n", type);
 
     struct SUBFRAME_HEADER{
+    sub_frame_header_type_pos = FTell();
         BYTE zero_padding   : 1;     
         BYTE type           : 6;      
         BYTE wastedBits     : 1;        
     } header; 
 
+Printf("DEBUG: value of type. %d, header.type %d\n", type, header.type);
 
     // TODO switch over type
-     struct {
-        CHAR data[bits_per_sample];
-    } SUBFRAME_CONSTANT;
+    switch(type){
+        case 8:
+            struct {
+                CHAR data[bits_per_sample];
+            } SUBFRAME_CONSTANT;
+        break;
+        case 9:
+            struct {
+                CHAR data[bits_per_sample * block_size];
+            } SUBFRAME_VERBATIM;
+            break; 
+    }
+
 
 } SUB_FRAME;
 
@@ -92,15 +105,35 @@ typedef struct {
 
     // create 5 - 20 sub_frames per frame 
     local int i = 0;
-    local UINT len = { 1, 2, 3, 4};
-    while( i < (len * 5)) {
-       // local int type = { 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
-        SUB_FRAME sub_frame(0);
+ //   local UINT len = { 1, 2, 3, 4};
+//    while( i < (len * 5)) {
 
-      if(   frame.sub_frame.header.zero_padding != 0x0
-        ||  frame.sub_frame.header.type         != 0x0
-        ||  frame.sub_frame.header.wastedBits   != 0x0     
+   while( i < 10) {  
+//    local BYTE type = { 8, 9, 10, 11, 12, 13, 14, 15};
+        local BYTE type = /*i % 2 == 0 ? 8 : 9*/9;
+        Printf("generate subframe #%d, type %d\n", i,type); 
+        SUB_FRAME sub_frame(type);
+
+        // set the magic values
+        if(sub_frame.header.zero_padding != 0x0
+//        || sub_frame.header.type != 0x09
+        || sub_frame.header.wastedBits   != 0x0     
         ) {return -1;}
+
+        switch(type){
+            case 0x08: 
+                if (sub_frame.header.type != 0x08) {return -1;}
+                break;
+            case 0x09: 
+                if (sub_frame.header.type != 0x09) {return -1;}
+                break;
+
+        }
+    
+
+
+
+
       i = i +1;
     }
 
