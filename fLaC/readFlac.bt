@@ -12,31 +12,58 @@
 //------------------------------------------------
 
 #define MAX_FILE_SIZE 1000000;
-local int meta_data_header_end;
 
-typedef struct {
+struct METADATA_BLOCK {
+
     struct METADATA_BLOCK_HEADER {
-        BYTE lastBlock : 1;
-        BYTE blockType : 7;       
-        UINT length;            // the length of the block_data
+        UBYTE last_block : 1;
+        UBYTE block_type : 7;
+        UINT length;			                       
     } header;
-    meta_data_header_end = FTell();
 
-    
-    struct METADATA_BLOCK_DATA_STREAMINFO {
-        WORD min_block_size;    // 16 bit
-        WORD max_block_size;    // 16 bit
-        WORD min_frame_size;    // 24 bit
-        WORD max_frame_size;    // 24 bit
-        QWORD sample_rate       : 20;
-        QWORD num_channels      : 3;
-        QWORD bits_per_sample   : 5; // -> length of each subframe_constant block
-        QWORD num_samples       : 36; // -> total length
-        CHAR md5_signature[128];// 128 bit
-    } streaminfo;     
-    
+    // content
+      switch(header.block_type) {
+        case 0: // streaminfo
+            struct STREAMINFO {           
+                WORD min_block_size; 
+                WORD max_block_size;	
+        	    WORD min_frame_size;	 
+                WORD max_frame_size;  
 
-} METADATA_BLOCK;
+                QWORD sample_rate       : 20;
+                QWORD num_channels      : 3;
+                QWORD bits_per_sample   : 5;        
+                QWORD num_samples       : 36; 
+    
+                CHAR md5_signature[128];            // TODO get the actual checksum
+            } streaminfo <bgcolor=cLtGreen>;
+            break;
+        case 1: // padding
+            struct PADDING {
+                WORD padding;
+            } padding <bgcolor=0xde0b5c>;
+            break;
+        case 4: // vorbis comment
+            struct VORBIS_COMMENT {
+                UINT32  vendor_length;
+                CHAR    vendor_string[11]; 
+                UINT32  list_length;   
+            
+                UINT32  title_length;
+                CHAR    title[25];
+
+                UINT32  version_length;
+                CHAR    version[11];
+
+                UINT32  organization_length;
+                CHAR    organization[32];
+            } vorbis_comment <bgcolor=0x1aebc4>;
+            break;
+        default:
+            // other types are not implemented
+            return -1;
+    }
+};
 
 
 typedef struct {
@@ -45,34 +72,24 @@ typedef struct {
         BYTE type           : 6;      
         BYTE wastedBits     : 1;        
     } header;             
-    Printf("SUBFRAME WITH TYPE %d\n", header.type);
 
-    // decide which subframe type was used
-     switch(header.type){
-        case 0x08:
-            struct {
-                CHAR data[16];
-            } SUBFRAME_CONSTANT;
-        break;
-        case 0x09:
-            struct {
-                CHAR data[16 * 5];
-            } SUBFRAME_VERBATIM;
-            break; 
-        default:
-            Printf("found type %d\n", header.type);
-    }
-
-
-
+    if (header.type == 0) {
+        struct {
+            CHAR data[16];
+        } SUBFRAME_CONSTANT;
+    } else if (header.type == 1){
+        struct {
+            CHAR data[16 * 5];
+        } SUBFRAME_VERBATIM;
+    } 
 } SUB_FRAME;
 
 
 typedef struct {
     UBYTE sync_code_1;
-    UBYTE sync_code_2        : 6;
-    UBYTE reserved_1         : 1;
-    UBYTE blocking_strategy  : 1;
+    UBYTE sync_code_2        : 6 ;
+    UBYTE reserved_1         : 1 ;
+    UBYTE blocking_strategy  : 1 ;
 
     WORD block_size         : 4;
     WORD sample_rate        : 4;
@@ -92,10 +109,15 @@ typedef struct {
         // TODO reference doesn't work here!
 //    local uint BytesPerSubFrame = 1 + bits_per_sample;
     local uint BytesPerSubFrame = 1 + 16;
-    while ( !FEof() && (FTell() + BytesPerSubFrame) < FileSize() && ReadByte(FTell() + 2) != -1 && ReadByte(FTell() + 2) != 8){
-    Printf("parse Subframe\n");   
-     SUB_FRAME sub_frame <bgcolor=cSilver>;
-    }   
+    local int count = 0;
+    local int last_size;
+    while ( !FEof() && ReadByte(FTell() + 2) != -1 && ReadByte(FTell() + 2) != 8){   
+    Printf("READ:[%d] curr=%d \t curr+1=%d \t curr+2=%d\n",count, ReadByte(FTell()), ReadByte(FTell()+1), ReadByte(FTell()+2));    
+    SUB_FRAME sub_frame <bgcolor=cSilver>;
+    last_size = sizeof(sub_frame);
+    Printf("last size %d, after: %d\n", last_size, ReadByte(FTell()+1));
+    count = count +1;    
+}   
 
     
     struct {
@@ -111,8 +133,16 @@ LittleEndian();
 
 CHAR CapturePattern[4]; // fLaC
 
-METADATA_BLOCK metadata_block <bgcolor=cLtGreen>;
+// parse metadata blocks until the frame synccode is found
+while (!FEof() && ReadByte(FTell()) != -1 && ReadByte(FTell() + 1) != 8) {
+   METADATA_BLOCK metadata;
+Printf("meta data block == last -> %d\n", metadata.header.last_block);
+    if(metadata.header.last_block == 1) {
+        Printf("DEBUG found last block\n");
+    }
+}
 
+// when the first synccode is found, only frames can follow
 while(!FEof()) {
     FRAME frame <bgcolor=cLtBlue>;
 }

@@ -12,45 +12,77 @@
 //------------------------------------------------
 
 #define MAX_FILE_SIZE 1000000;
+local int meta_data_block_start;
 local int meta_Data_header_pos;
-local int meta_data_header_end;
 local int sub_frame_header_type_pos;
 
-typedef struct {
-    struct METADATA_BLOCK_HEADER{
+struct METADATA_BLOCK (UBYTE type){
+     meta_data_block_start = FTell();
+
+    struct METADATA_BLOCK_HEADER {
+        meta_Data_header_pos = FTell();
         UBYTE last_block : 1;
         UBYTE block_type : 7;
-        meta_Data_header_pos = FTell();
-        UINT length = {1234};			                       // the length of the block_data // TODO add this
+        UINT length;			                       
     } header;
-        meta_data_header_end = FTell();
 
-    // magic values for the header
-    if (header.last_block != 0x01 || header.block_type != 0x00) { return -1;}
+    // content
+    local UBYTE _type;
+    switch(type) {
+        case 0: // streaminfo
+            struct STREAMINFO {           
+                WORD min_block_size = {0x18}; 
+                WORD max_block_size = {0x18};	
+        	    WORD min_frame_size = {0x00};	 
+                WORD max_frame_size = {0x00};  
 
-    struct METADATA_BLOCK_DATA_STREAMINFO{
-        WORD min_block_size = {0x18}; 
-	    WORD max_block_size = {0x18};	
-	    WORD min_frame_size = {0x00};	 
-	    WORD max_frame_size = {0x00};  
-
-        QWORD sample_rate       : 20;
-        QWORD num_channels      : 3;
-        QWORD bits_per_sample   : 5;        // -> length of each subframe_constant block
-        QWORD num_samples       : 36; 
+                QWORD sample_rate       : 20;
+                QWORD num_channels      : 3;
+                QWORD bits_per_sample   : 5;        
+                QWORD num_samples       : 36; 
     
-        CHAR md5_signature[128];            // TODO get the actual checksum
-    } streamInfo;
+                CHAR md5_signature[128];            // TODO get the actual checksum
+            } streaminfo;
 
-    // generate one or more padding blocks
-    /*local BYTE possible_values[] = { 0, -1 };
-    while(ReadByte(FTell(), possible_values) != -1) {
-        WORD padding = { 0x00 };
-    }*/
- 
-} METADATA_BLOCK;
+            // FIXME remove this magic value
+            if(streaminfo.bits_per_sample != 0x10) {return -1;}
+            break;
+        case 1: // padding
+            struct PADDING {
+                WORD padding = {0x00};
+            } padding;
+            break;
+        case 4: // vorbis comment
+            struct VORBIS_COMMENT {
+                UINT32  vendor_length = {0x0B};
+                CHAR    vendor_string[11] = {"some vendor"}; 
+                UINT32  list_length = {0x03};   
+            
+                UINT32  title_length = {0x19};
+                CHAR    title[25] = {"TITLE=auto generated file"};
 
-typedef struct (BYTE type) {
+                UINT32  version_length = {0x0B};
+                CHAR    version[11] = {"VERSION=1.0"};
+
+                UINT32  organization_length = {0x20};
+                CHAR    organization[32] = {"ORGANIZATION=Saarland University"};
+            } vorbis_comment;
+            break;
+        default:
+            // other types are not implemented
+            return -1;
+    }
+
+    // set the header values
+    //NOTE because we force block type at the after the last metadata block, we set it to 0
+    local int curr_pos = FTell();
+    FSeek(meta_Data_header_pos);
+    UBYTE var_1= { ((UBYTE)(type * 2)) }; // need to shift it by 1 place
+    UINT length = {(UINT)((curr_pos - meta_data_block_start) - sizeof(header))};		
+    FSeek(curr_pos);
+};
+
+typedef struct {
    // Printf("create SUBFRAME with type %d\n", type);
 
     struct SUBFRAME_HEADER{
@@ -60,23 +92,16 @@ typedef struct (BYTE type) {
         BYTE wastedBits     : 1;        
     } header; 
 
-Printf("DEBUG: value of type. %d, header.type %d\n", type, header.type);
-
-    // TODO switch over type
-    switch(type){
-        case 8:
-            struct {
-                CHAR data[bits_per_sample];
-            } SUBFRAME_CONSTANT;
-        break;
-        case 9:
-            struct {
-                CHAR data[bits_per_sample * block_size];
-            } SUBFRAME_VERBATIM;
-            break; 
+    // generate the proper subframe structure according to the type
+    if (header.type == 0x00) {
+        struct {
+            CHAR data[bits_per_sample];
+        } SUBFRAME_CONSTANT;
+    } else if (header.type == 0x01){
+        struct {
+            CHAR data[bits_per_sample * block_size];
+        } SUBFRAME_VERBATIM;
     }
-
-
 } SUB_FRAME;
 
 typedef struct {
@@ -103,36 +128,29 @@ typedef struct {
         
     } header;
 
+    // header magic values
+     if( header.sync_code_1 != 0xFF // this should be 3FFE / FE3F in littleEndian, but it wont work then
+     ||  header.sync_code_2 != 0x08
+     ||  header.reserved_1 != 0x0
+     ||  header.blocking_strategy != 0x0
+     ||  header.block_size != 0x5
+     ||  header.sample_size != 0x5
+     ||  header.reserved_2 != 0x0
+      ) {return -1;}
+
     // create 5 - 20 sub_frames per frame 
     local int i = 0;
- //   local UINT len = { 1, 2, 3, 4};
-//    while( i < (len * 5)) {
+   // local BYTE len[] = { 1, 2, 3, 4}; // -> type = class std::vector<char> || -> just saves the content of {} as a list, does not pick one
+   // while( i < (len[0] * 5)) {
 
    while( i < 10) {  
-//    local BYTE type = { 8, 9, 10, 11, 12, 13, 14, 15};
-        local BYTE type = /*i % 2 == 0 ? 8 : 9*/9;
-        Printf("generate subframe #%d, type %d\n", i,type); 
-        SUB_FRAME sub_frame(type);
+        SUB_FRAME sub_frame;
 
         // set the magic values
         if(sub_frame.header.zero_padding != 0x0
 //        || sub_frame.header.type != 0x09
         || sub_frame.header.wastedBits   != 0x0     
         ) {return -1;}
-
-        switch(type){
-            case 0x08: 
-                if (sub_frame.header.type != 0x08) {return -1;}
-                break;
-            case 0x09: 
-                if (sub_frame.header.type != 0x09) {return -1;}
-                break;
-
-        }
-    
-
-
-
 
       i = i +1;
     }
@@ -153,32 +171,22 @@ CHAR CapturePattern[4];
     if( CapturePattern != "fLaC") {return -1;}
 
 // # meta data
-METADATA_BLOCK metadata_block;
-    
-    if(metadata_block.streamInfo.bits_per_sample != 0x10) {      
-        return -1;
-    }
+METADATA_BLOCK streaminfo(0);
+METADATA_BLOCK padding_0(1);
+METADATA_BLOCK vorbis_comment(4);
+METADATA_BLOCK padding_1(1);
+// TODO generate a random amount of padding blocks here
 
-// get meta data header.lrngth (#bites after header until first 0xFF08
+// change the last block value for the last block
 local int curr_pos = FTell();
 FSeek(meta_Data_header_pos);
-UINT length = { ((UINT)(sizeof(metadata_block) - sizeof(metadata_block.header))) };		
+//UBYTE var_1 = { ((UBYTE)((padding_1.header.block_type * 2) + 1)) }; // need to shift it by 1 place
+UBYTE var_1 = {3};
 FSeek(curr_pos);
 
 // # frames
 while(!FEof()) {
-FRAME frame;
-    
-    if(     frame.header.sync_code_1 != 0xFF // this should be 3FFE / FE3F in littleEndian, but it wont work then
-        ||  frame.header.sync_code_2 != 0x08
-        ||  frame.header.reserved_1 != 0x0
-        ||  frame.header.blocking_strategy != 0x0
-        ||  frame.header.block_size != 0x5
-        ||  frame.header.sample_size != 0x5
-        ||  frame.header.reserved_2 != 0x0
-      ) {return -1;}
-
-
+    FRAME frame;
 }
 
 SetEvilBit(evilBit);
