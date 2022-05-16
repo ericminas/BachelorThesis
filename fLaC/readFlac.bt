@@ -106,13 +106,14 @@ typedef struct {
     FRAME_HEADER header;
     
     // parse sub_frames until a new frame is found
-        // TODO reference doesn't work here!
-//    local uint BytesPerSubFrame = 1 + bits_per_sample;
-    local uint BytesPerSubFrame = 1 + 16;
     local int count = 0;
     local int last_size;
-    while ( !FEof() && ReadByte(FTell() + 2) != -1 && ReadByte(FTell() + 2) != 8){   
-    Printf("READ:[%d] curr=%d \t curr+1=%d \t curr+2=%d\n",count, ReadByte(FTell()), ReadByte(FTell()+1), ReadByte(FTell()+2));    
+    while ( !FEof() 
+        && (FTell() + last_size) < FileSize()
+        && ReadByte(FTell() + 2) != -1 
+        && ReadByte(FTell() + 2) != 8
+        ) {   
+   // Printf("READ:[%d] curr=%d \t curr+1=%d \t curr+2=%d\n",count, ReadByte(FTell()), ReadByte(FTell()+1), ReadByte(FTell()+2));    
     SUB_FRAME sub_frame <bgcolor=cSilver>;
     last_size = sizeof(sub_frame);
     Printf("last size %d, after: %d\n", last_size, ReadByte(FTell()+1));
@@ -122,7 +123,7 @@ typedef struct {
     
     struct {
         WORD checksum;
-    } FRAME_FOOTER;
+    } FRAME_FOOTER <bgcolor=0xDB04D1>;
 
 } FRAME;
 

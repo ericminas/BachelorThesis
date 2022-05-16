@@ -101,6 +101,9 @@ typedef struct {
         struct {
             CHAR data[bits_per_sample * block_size];
         } SUBFRAME_VERBATIM;
+    } else {
+        Printf("INVALID TYPE! %d\n", header.type);
+        return -1;
     }
 } SUB_FRAME;
 
