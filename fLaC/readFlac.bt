@@ -20,7 +20,6 @@ struct METADATA_BLOCK {
         UBYTE block_type : 7;
         UINT length;			                       
     } header;
-
     // content
       switch(header.block_type) {
         case 0: // streaminfo
@@ -40,7 +39,9 @@ struct METADATA_BLOCK {
             break;
         case 1: // padding
             struct PADDING {
-                WORD padding;
+                while(ReadByte(FTell()) == 0x00) {
+                    UBYTE padding;
+                }
             } padding <bgcolor=0xde0b5c>;
             break;
         case 4: // vorbis comment
@@ -108,17 +109,18 @@ typedef struct {
     // parse sub_frames until a new frame is found
     local int count = 0;
     local int last_size;
-    while ( !FEof() 
+    // TODO fix the look ahead so that it does not run out of bounds
+    while ( 
+        !FEof() 
         && (FTell() + last_size) < FileSize()
         && ReadByte(FTell() + 2) != -1 
         && ReadByte(FTell() + 2) != 8
         ) {   
-   // Printf("READ:[%d] curr=%d \t curr+1=%d \t curr+2=%d\n",count, ReadByte(FTell()), ReadByte(FTell()+1), ReadByte(FTell()+2));    
-    SUB_FRAME sub_frame <bgcolor=cSilver>;
-    last_size = sizeof(sub_frame);
-    Printf("last size %d, after: %d\n", last_size, ReadByte(FTell()+1));
-    count = count +1;    
-}   
+        
+            SUB_FRAME sub_frame <bgcolor=cSilver>;
+            last_size = sizeof(sub_frame);
+            count = count +1;    
+        }   
 
     
     struct {
@@ -136,10 +138,10 @@ CHAR CapturePattern[4]; // fLaC
 
 // parse metadata blocks until the frame synccode is found
 while (!FEof() && ReadByte(FTell()) != -1 && ReadByte(FTell() + 1) != 8) {
-   METADATA_BLOCK metadata;
-Printf("meta data block == last -> %d\n", metadata.header.last_block);
+    METADATA_BLOCK metadata;
+    
     if(metadata.header.last_block == 1) {
-        Printf("DEBUG found last block\n");
+        break;
     }
 }
 

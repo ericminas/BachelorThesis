@@ -21,8 +21,9 @@ struct METADATA_BLOCK (UBYTE type){
 
     struct METADATA_BLOCK_HEADER {
         meta_Data_header_pos = FTell();
-        UBYTE last_block : 1;
-        UBYTE block_type : 7;
+        //UBYTE last_block : 1;
+        //UBYTE block_type : 7;
+        UBYTE last_and_type;
         UINT length;			                       
     } header;
 
@@ -49,23 +50,30 @@ struct METADATA_BLOCK (UBYTE type){
             break;
         case 1: // padding
             struct PADDING {
-                WORD padding = {0x00};
+                // generate a random size for the padding block
+                local BYTE size[] = {8, 16, 32, 64};
+                local int i = 0;
+                while( i < ReadByte(0, size)) {
+                    
+                    UCHAR padding = {0x00};
+                    i = i + 8;
+                }  
             } padding;
             break;
         case 4: // vorbis comment
             struct VORBIS_COMMENT {
-                UINT32  vendor_length = {0x0B};
+                UINT32  vendor_length   = {0x0B};
                 CHAR    vendor_string[11] = {"some vendor"}; 
                 UINT32  list_length = {0x03};   
             
-                UINT32  title_length = {0x19};
-                CHAR    title[25] = {"TITLE=auto generated file"};
+                UINT32  title_length        = {0x19};
+                CHAR    title[25]           = {"TITLE=auto generated file"};
 
-                UINT32  version_length = {0x0B};
-                CHAR    version[11] = {"VERSION=1.0"};
+                UINT32  version_length      = {0x0B};
+                CHAR    version[11]         = {"VERSION=1.0"};
 
                 UINT32  organization_length = {0x20};
-                CHAR    organization[32] = {"ORGANIZATION=Saarland University"};
+                CHAR    organization[32]    = {"ORGANIZATION=Saarland University"};
             } vorbis_comment;
             break;
         default:
@@ -87,17 +95,16 @@ typedef struct {
 
     struct SUBFRAME_HEADER{
     sub_frame_header_type_pos = FTell();
-        BYTE zero_padding   : 1;     
-        BYTE type           : 6;      
-        BYTE wastedBits     : 1;        
+        BYTE type;     
     } header; 
 
+    // NOTE: beacuse I don't use a bitfield here, the type is multiplied by 2
     // generate the proper subframe structure according to the type
     if (header.type == 0x00) {
         struct {
             CHAR data[bits_per_sample];
         } SUBFRAME_CONSTANT;
-    } else if (header.type == 0x01){
+    } else if (header.type == 0x02){
         struct {
             CHAR data[bits_per_sample * block_size];
         } SUBFRAME_VERBATIM;
@@ -143,19 +150,10 @@ typedef struct {
 
     // create 5 - 20 sub_frames per frame 
     local int i = 0;
-   // local BYTE len[] = { 1, 2, 3, 4}; // -> type = class std::vector<char> || -> just saves the content of {} as a list, does not pick one
-   // while( i < (len[0] * 5)) {
-
-   while( i < 10) {  
+    local BYTE len[] = { 5, 10, 15, 20};
+    while( i < ( 5  + ReadByte(0, len))) {  
         SUB_FRAME sub_frame;
-
-        // set the magic values
-        if(sub_frame.header.zero_padding != 0x0
-//        || sub_frame.header.type != 0x09
-        || sub_frame.header.wastedBits   != 0x0     
-        ) {return -1;}
-
-      i = i +1;
+        i = i +1;
     }
 
     struct FRAME_FOOTER {
@@ -177,14 +175,17 @@ CHAR CapturePattern[4];
 METADATA_BLOCK streaminfo(0);
 METADATA_BLOCK padding_0(1);
 METADATA_BLOCK vorbis_comment(4);
-METADATA_BLOCK padding_1(1);
-// TODO generate a random amount of padding blocks here
+// generate up to 10 padding blocks
+local int i = 0;
+local BYTE len[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+while( i < ReadByte(0, len)) {
+    METADATA_BLOCK padding(1);
+    i = i +1;
+}
 
-// change the last block value for the last block
 local int curr_pos = FTell();
 FSeek(meta_Data_header_pos);
-//UBYTE var_1 = { ((UBYTE)((padding_1.header.block_type * 2) + 1)) }; // need to shift it by 1 place
-UBYTE var_1 = {3};
+UBYTE var_1 = { 3 };
 FSeek(curr_pos);
 
 // # frames
