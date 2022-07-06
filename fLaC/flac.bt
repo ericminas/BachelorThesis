@@ -21,8 +21,6 @@ struct METADATA_BLOCK (UBYTE type){
 
     struct METADATA_BLOCK_HEADER {
         meta_Data_header_pos = FTell();
-        //UBYTE last_block : 1;
-        //UBYTE block_type : 7;
         UBYTE last_and_type;
         UINT length;			                       
     } header;
@@ -30,7 +28,7 @@ struct METADATA_BLOCK (UBYTE type){
     // content
     local UBYTE _type;
     switch(type) {
-        case 0: // streaminfo
+        case 0:
             struct STREAMINFO {           
                 WORD min_block_size = {0x18}; 
                 WORD max_block_size = {0x18};	
@@ -38,19 +36,21 @@ struct METADATA_BLOCK (UBYTE type){
                 WORD max_frame_size = {0x00};  
 
                 QWORD sample_rate       : 20;
-                QWORD num_channels      : 3;
+                QWORD num_channels      : 3; 
                 QWORD bits_per_sample   : 5;        
                 QWORD num_samples       : 36; 
     
-                CHAR md5_signature[128];            // TODO get the actual checksum
+                // the generation cannot be done within this file.
+                // Using 16 * "0" disables the behaviour.
+                CHAR md5_signature[16] = { "0000000000000000" };
             } streaminfo;
 
-            // FIXME remove this magic value
+            // force the value for other variables later on
             if(streaminfo.bits_per_sample != 0x10) {return -1;}
             break;
-        case 1: // padding
+        case 1:
             struct PADDING {
-                // generate a random size for the padding block
+                // generate a semi-random size for the padding block
                 local BYTE size[] = {8, 16, 32, 64};
                 local int i = 0;
                 while( i < ReadByte(0, size)) {
@@ -60,7 +60,7 @@ struct METADATA_BLOCK (UBYTE type){
                 }  
             } padding;
             break;
-        case 4: // vorbis comment
+        case 4:
             struct VORBIS_COMMENT {
                 UINT32  vendor_length   = {0x0B};
                 CHAR    vendor_string[11] = {"some vendor"}; 
@@ -91,14 +91,13 @@ struct METADATA_BLOCK (UBYTE type){
 };
 
 typedef struct {
-   // Printf("create SUBFRAME with type %d\n", type);
 
     struct SUBFRAME_HEADER{
-    sub_frame_header_type_pos = FTell();
+        sub_frame_header_type_pos = FTell();
         BYTE type;     
     } header; 
 
-    // NOTE: beacuse I don't use a bitfield here, the type is multiplied by 2
+    // NOTE: because I don't use a bitfield here, the type is multiplied by 2
     // generate the proper subframe structure according to the type
     if (header.type == 0x00) {
         struct {
@@ -134,12 +133,12 @@ typedef struct {
         
         // compute checksum
         local UCHAR checksum_result = Checksum(CHECKSUM_CRC8, frame_start, FTell() - frame_start);
-        UCHAR CRC_8 = {checksum_result}; // TODO get the actual checksum
+        UCHAR CRC_8 = {checksum_result};
         
     } header;
 
     // header magic values
-     if( header.sync_code_1 != 0xFF // this should be 3FFE / FE3F in littleEndian, but it wont work then
+     if( header.sync_code_1 != 0xFF 
      ||  header.sync_code_2 != 0x08
      ||  header.reserved_1 != 0x0
      ||  header.blocking_strategy != 0x0
@@ -175,6 +174,7 @@ CHAR CapturePattern[4];
 METADATA_BLOCK streaminfo(0);
 METADATA_BLOCK padding_0(1);
 METADATA_BLOCK vorbis_comment(4);
+
 // generate up to 10 padding blocks
 local int i = 0;
 local BYTE len[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -183,12 +183,13 @@ while( i < ReadByte(0, len)) {
     i = i +1;
 }
 
+// change the header of the last metadata_block to "last metadata_block"
 local int curr_pos = FTell();
 FSeek(meta_Data_header_pos);
 UBYTE var_1 = { 3 };
 FSeek(curr_pos);
 
-// # frames
+// # frames -> create frames until the file is full
 while(!FEof()) {
     FRAME frame;
 }
