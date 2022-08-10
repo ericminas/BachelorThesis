@@ -1,0 +1,175 @@
+// build the file
+BigEndian();
+local int evilBit = SetEvilBit(false);
+
+//  # Capture pattern
+CHAR CapturePattern[4] = {"fLaC"};
+
+
+// # meta data
+local int meta_data_block_start;
+local int meta_Data_header_pos;
+
+struct METADATA_BLOCK (UBYTE type, char isLast){
+     meta_data_block_start = FTell();
+
+    struct METADATA_BLOCK_HEADER {
+        meta_Data_header_pos = FTell();  
+        // need to combine this into one var due to the loop this is used in.      
+        UINT last_type_len;	                       
+    } header;
+
+ // content
+    local UBYTE _type;
+    switch(type) {
+        case 0:
+            struct STREAMINFO {           
+                WORD  min_block_size        = {0x18}; 
+                WORD  max_block_size        = {0x18};	
+                // need 24 bit, use 16 + 4 instead
+        	    WORD  min_frame_size        = {0x00};	 
+                UBYTE min_frame_size_rest   = {0x00};
+                // need 24 bit, use 16 + 4 instead  
+                WORD  max_frame_size        = {0x00};
+                UBYTE max_frame_size_rest   = {0x00};   
+
+                QWORD sample_rate       : 20;
+                QWORD num_channels      : 3; 
+                QWORD bits_per_sample   : 5;        
+                QWORD num_samples       : 36; 
+    
+                // the generation cannot be done within this file.
+                // Using only 0s disables the behaviour.
+                QWORD md5_signature_1 = { 0x00 };
+                QWORD md5_signature_2 = { 0x00 };
+            } streaminfo;
+
+            // force the value for other variables later on
+            if( streaminfo.bits_per_sample != 0x10
+            ||  streaminfo.num_samples != 0x00) {
+                return -1;
+            } 
+            break;
+        case 1:
+            struct PADDING {
+                local int i = 0;
+                while(i < 8) {
+                    UCHAR padding = {0x00};    
+                    i = i + 1;
+                }
+
+            } padding;
+            break;
+        case 4:
+            struct VORBIS_COMMENT {               
+                UINT32  vender_length       = {0x20};
+                CHAR    vendor_string[32]   = {"reference libFLAC 1.3.0 20130526"};
+                UINT32  list_length = {0x03};   
+            
+                UINT32  title_length        = {0x19};
+                CHAR    title[25]           = {"TITLE=auto generated file"};
+
+                UINT32  version_length      = {0x0B};
+                CHAR    version[11]         = {"VERSION=1.0"};
+
+                UINT32  organization_length = {0x20};
+                CHAR    organization[32]    = {"ORGANIZATION=Saarland University"};
+            } vorbis_comment;
+            break;
+        default:
+            // other types are not implemented
+            return -1;
+    }
+
+    // set the header values
+    local int curr_pos = FTell();
+    FSeek(meta_Data_header_pos);
+    
+    local UINT length = (curr_pos - meta_data_block_start) - sizeof(header);
+    local UINT last_type_len = (isLast == 1? 2147483648 : 0 )+ (type * 16777216) + length;
+    UINT val = { (UINT)(last_type_len) };  
+    
+    FSeek(curr_pos);
+};
+
+
+typedef struct {
+
+    struct SUBFRAME_HEADER{
+        BYTE type;     
+    } header; 
+
+    // NOTE: because I don't use a bitfield here, the type is multiplied by 2
+    // generate the proper subframe structure according to the type
+    if (header.type == 0x00) {
+        struct {
+            CHAR data[bits_per_sample];
+        } SUBFRAME_CONSTANT;
+    } else if (header.type == 0x02){
+        struct {
+            CHAR data[bits_per_sample * block_size];
+        } SUBFRAME_VERBATIM;
+    } else {
+        Printf("INVALID TYPE! %d\n", header.type);
+        return -1;
+    }
+} SUB_FRAME;
+
+typedef struct {
+    local int frame_start = FTell();
+     struct FRAME_HEADER{   
+        // combine the synccode, the reserved bit and the blocking strategy in 2 vars,
+        // so that no bitfields are used (causes an error with FormatFuzzer).
+        UBYTE sync_code_p1 = { 0xFF };
+        UBYTE sync_code_p2 = { 0xF8 };
+ 
+
+        WORD block_size         : 4;
+        WORD sample_rate        : 4;
+        WORD channel_assignment : 4;
+        WORD sample_size        : 3;
+        WORD reserved_2         : 1;  
+
+        // 32 bit and each bit is uneven free bit is 1 and each even free bit is 0
+        DWORD coded_frame_number = { 0xF5AAAAAA };
+        
+        // compute checksum
+        local UCHAR checksum_result = Checksum(CHECKSUM_CRC8, frame_start, FTell() - frame_start);
+        UCHAR CRC_8 = {checksum_result};
+        
+    } header;
+
+    // header magic values
+     if( header.block_size != 0x5
+     ||  header.sample_size != 0x5
+     ||  header.reserved_2 != 0x0
+      ) {return -1;}
+
+    // create 15 sub_frames per frame 
+    local int i = 0;
+    while ( i < 15) {    
+        SUB_FRAME sub_frame;
+        i = i +1;
+    }
+
+    struct FRAME_FOOTER {
+        local WORD crc_calc = Checksum(CHECKSUM_CRC16, frame_start, FTell() - frame_start);
+        WORD checksum = { crc_calc } <fgcolor=cDkPurple>;
+    } footer;
+
+} FRAME;
+
+
+METADATA_BLOCK streaminfo(0,0);
+METADATA_BLOCK vorbis_comment(4, 0);
+
+// generate 2 padding blocks
+METADATA_BLOCK padding(1, 0);
+METADATA_BLOCK padding(1, 1);
+
+// # frames -> create frames until the file is full
+while(!FEof()) {
+    FRAME frame;
+}
+
+SetEvilBit(evilBit);

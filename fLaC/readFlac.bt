@@ -1,0 +1,161 @@
+//------------------------------------------------
+//--- 010 Editor v11.0.1 Binary Template
+//
+//      File: flac.bt
+//   Authors: Eric Minas
+//   Version: 1.0
+//   Purpose: parsing .flac files 
+//  Category: Audio
+// File Mask: *.flac
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#define MAX_FILE_SIZE 1000000;
+
+struct METADATA_BLOCK {
+
+    struct METADATA_BLOCK_HEADER {
+        UINT last_block :  1;
+        UINT block_type :  7;
+        UINT length     : 24;
+    } header;
+
+    // content
+      switch(header.block_type) {
+        case 0: // streaminfo
+            struct STREAMINFO {           
+                WORD min_block_size; 
+                WORD max_block_size;	
+        	    WORD min_frame_size;	 
+                UBYTE min_frame_size_rest;
+                WORD max_frame_size;  
+                UBYTE max_frame_size_rest;
+
+                QWORD sample_rate       : 20;
+                QWORD num_channels      : 3;
+                QWORD bits_per_sample   : 5;        
+                QWORD num_samples       : 36; 
+    
+                // 1 char = 8 bit => 16 chars = 128 bit
+                QWORD md5_signature_1;
+                QWORD md5_signature_2;
+            } streaminfo <bgcolor=cLtGreen>;
+            break;
+        case 1: // padding
+            struct PADDING {
+                local int i = 0;
+                while ( i < header.length) {
+                    UBYTE padding;
+                    i = i + 1;
+                }
+                /*while(((UBYTE)ReadByte(FTell())) == 0x00) {
+                    UBYTE padding;
+                }*/
+            } padding <bgcolor=0xde0b5c>;
+            break;
+        case 4: // vorbis comment
+            struct VORBIS_COMMENT {
+                UINT32  vendor_length;
+                CHAR    vendor_string[32]; 
+                UINT32  list_length;   
+            
+                UINT32  title_length;
+                CHAR    title[25];
+
+                UINT32  version_length;
+                CHAR    version[11];
+
+                UINT32  organization_length;
+                CHAR    organization[32];
+            } vorbis_comment <bgcolor=0x1aebc4>;
+            break;
+        default:
+            // other types are not implemented
+            return -1;
+    }
+};
+
+
+typedef struct {
+    struct SUBFRAME_HEADER{
+        BYTE zero_padding   : 1;     
+        BYTE type           : 6;      
+        BYTE wastedBits     : 1;        
+    } header;             
+
+    if (header.type == 0) {
+        struct {
+            CHAR data[16];
+        } SUBFRAME_CONSTANT;
+    } else if (header.type == 1){
+        struct {
+            CHAR data[16 * 5];
+        } SUBFRAME_VERBATIM;
+    } 
+} SUB_FRAME;
+
+
+typedef struct {
+    UBYTE sync_code_1;
+    UBYTE sync_code_2        : 6 ;
+    UBYTE reserved_1         : 1 ;
+    UBYTE blocking_strategy  : 1 ;
+
+    WORD block_size         : 4;
+    WORD sample_rate        : 4;
+    WORD channel_assignment : 4;
+    WORD sample_size        : 3;
+    WORD reserved_2         : 1;  
+
+    DWORD coded_frame_number; // 31 bit -> moved to 32
+    // hope that block_size != 011x && sample_rate != 11xx
+    UCHAR CRC_8;
+} FRAME_HEADER;
+
+typedef struct {
+    FRAME_HEADER header <bgcolor=cLtBlue>;
+    
+    // parse sub_frames until a new frame is found
+    local int count = 0;
+    local int last_size;
+    // TODO fix the look ahead so that it does not run out of bounds
+    while ( 
+        !FEof() 
+        && (FTell() + last_size) < FileSize()
+        && ReadByte(FTell() + 2) != -1 
+        && ReadByte(FTell() + 2) != 8 
+        ) {   
+        
+            SUB_FRAME sub_frame;
+            last_size = sizeof(sub_frame);
+            count = count +1;    
+        }   
+
+    
+    struct {
+        WORD checksum;
+    } FRAME_FOOTER <bgcolor=0xDB04D1>;
+
+} FRAME;
+
+
+BigEndian(); 
+
+// actual parsing
+
+CHAR CapturePattern[4]; // fLaC
+
+// parse metadata blocks until the frame synccode is found
+while (!FEof() && ReadByte(FTell()) != -1 && ReadByte(FTell() + 1) != 8) {
+    METADATA_BLOCK metadata;
+    
+    if(metadata.header.last_block == 1) {
+        break;
+    }
+}
+
+// when the first synccode is found, only frames can follow
+while(!FEof()) {
+    FRAME frame;
+}

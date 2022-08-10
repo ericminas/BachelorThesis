@@ -1,0 +1,12 @@
+build:
+gcc validationScript.cpp -o validationscript -lstdc++
+
+run (normal)
+./validationscript 1000 ~/Desktop/Thesis/FormatFuzzer/
+
+run (only ogg)
+./validationscript 100 ~/Desktop/Thesis/FormatFuzzer/ ogg
+
+run (only flac)
+
+./validationscript 100 ~/Desktop/Thesis/FormatFuzzer/ flac
