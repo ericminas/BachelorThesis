@@ -1,0 +1,2 @@
+udo ./afl-fuzz -m 200MB -i ~/Desktop/Thesis/validationTools/baseline/miniaudio/testcase -o ~/Desktop/Thesis/validationTools/baseline/miniaudio/findings/ -- ~/Desktop/Thesis/validationTools/baseline/miniaudio/miniaudio_afl @@
+

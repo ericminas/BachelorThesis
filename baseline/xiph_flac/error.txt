@@ -1,0 +1,45 @@
+l1@L1:~/Desktop/Thesis/validationTools/AFL$ sudo ./afl-fuzz -i ~/Desktop/Thesis/validationTools/baseline/xiph_flac/testcase -o ~/Desktop/Thesis/validationTools/baseline/xiph_flac/findings/ -- ~/Desktop/Thesis/validationTools/baseline/xiph_flac/xiph_flac_afl 
+afl-fuzz 2.57b by <lcamtuf@google.com>
+[+] You have 2 CPU cores and 1 runnable tasks (utilization: 50%).
+[+] Try parallel jobs - see /usr/local/share/doc/afl/parallel_fuzzing.txt.
+[*] Checking CPU core loadout...
+[+] Found a free CPU core, binding to #0.
+[*] Checking core_pattern...
+[*] Checking CPU scaling governor...
+[*] Setting up output directories...
+[+] Output directory exists but deemed OK to reuse.
+[*] Deleting old session data...
+[+] Output dir cleanup successful.
+[*] Scanning '/home/l1/Desktop/Thesis/validationTools/baseline/xiph_flac/testcase'...
+[+] No auto-generated dictionary tokens to reuse.
+[*] Creating hard links for all input files...
+[*] Validating target binary...
+[*] Attempting dry run with 'id:000000,orig:KittyPurr8_Stereo.flac'...
+[*] Spinning up the fork server...
+[+] All right - fork server is up.
+
+[-] Oops, the program crashed with one of the test cases provided. There are
+    several possible explanations:
+
+    - The test case causes known crashes under normal working conditions. If
+      so, please remove it. The fuzzer should be seeded with interesting
+      inputs - but not ones that cause an outright crash.
+
+    - The current memory limit (50.0 MB) is too low for this program, causing
+      it to die due to OOM when parsing valid files. To fix this, try
+      bumping it up with the -m setting in the command line. If in doubt,
+      try something along the lines of:
+
+      ( ulimit -Sv $[49 << 10]; /path/to/binary [...] <testcase )
+
+      Tip: you can use http://jwilk.net/software/recidivm to quickly
+      estimate the required amount of virtual memory for the binary. Also,
+      if you are using ASAN, see /usr/local/share/doc/afl/notes_for_asan.txt.
+
+    - Least likely, there is a horrible bug in the fuzzer. If other options
+      fail, poke <lcamtuf@coredump.cx> for troubleshooting tips.
+
+[-] PROGRAM ABORT : Test case 'id:000000,orig:KittyPurr8_Stereo.flac' results in a crash
+         Location : perform_dry_run(), afl-fuzz.c:2898
+
+

@@ -1,0 +1,117 @@
+-------------------------- command: instrumentalize script
+1) CC=~/Desktop/Thesis/validationTools/afl-gcc CXX=~/Desktop/Thesis/validationTools/afl-g++ gcc testingScript.cpp -o testScript-afl
+
+2) $ CXX=~/Desktop/Thesis/validationTools/afl-g++
+   $ gcc testingScript.cpp -o testScript-afl
+
+3) [WORKING]
+l1@L1:~/Desktop/Thesis/Subjects/dr_libs$ CXX=~/Desktop/Thesis/validationTools/AFL/afl-g++
+
+l1@L1:~/Desktop/Thesis/Subjects/dr_libs$ ~/Desktop/Thesis/validationTools/AFL/afl-g++ testingScript.cpp -o testscript-afl
+afl-cc 2.57b by <lcamtuf@google.com>
+afl-as 2.57b by <lcamtuf@google.com>
+[+] Instrumented 4289 locations (64-bit, non-hardened mode, ratio 100%).
+
+-------------------------- command: run AFL
+
+l1@L1:~/Desktop/Thesis/validationTools/AFL$ ./afl-fuzz -i ~/Desktop/Thesis/validationTools/baseline/dr_libs/testcase/ -o ~/Desktop/Thesis/validationTools/baseline/dr_libs/findings/ -- ~/Desktop/Thesis/validationTools/baseline/dr_libs/testScript-afl D
+
+-------------------------- Error 1
+
+afl-fuzz 2.57b by <lcamtuf@google.com>
+[+] You have 2 CPU cores and 1 runnable tasks (utilization: 50%).
+[+] Try parallel jobs - see /usr/local/share/doc/afl/parallel_fuzzing.txt.
+[*] Checking CPU core loadout...
+[+] Found a free CPU core, binding to #0.
+[*] Checking core_pattern...
+
+[-] Hmm, your system is configured to send core dump notifications to an
+    external utility. This will cause issues: there will be an extended delay
+    between stumbling upon a crash and having this information relayed to the
+    fuzzer via the standard waitpid() API.
+
+    To avoid having crashes misinterpreted as timeouts, please log in as root
+    and temporarily modify /proc/sys/kernel/core_pattern, like so:
+
+    echo core >/proc/sys/kernel/core_pattern
+
+[-] PROGRAM ABORT : Pipe at the beginning of 'core_pattern'
+         Location : check_crash_handling(), afl-fuzz.c:7347
+
+-------------------------- Error 2
+
+l1@L1:~/Desktop/Thesis/validationTools/AFL$ sudo ./afl-fuzz -i ~/Desktop/Thesis/validationTools/baseline/dr_libs/testcase/ -o ~/Desktop/Thesis/validationTools/baseline/dr_libs/findings/ -- ~/Desktop/Thesis/validationTools/baseline/dr_libs/testScript-afl D
+afl-fuzz 2.57b by <lcamtuf@google.com>
+[+] You have 2 CPU cores and 8 runnable tasks (utilization: 400%).
+[!] WARNING: System under apparent load, performance may be spotty.
+[*] Checking CPU core loadout...
+[+] Found a free CPU core, binding to #0.
+[*] Checking core_pattern...
+[*] Checking CPU scaling governor...
+
+[-] Whoops, your system uses on-demand CPU frequency scaling, adjusted
+    between 1367 and 2929 MHz. Unfortunately, the scaling algorithm in the
+    kernel is imperfect and can miss the short-lived processes spawned by
+    afl-fuzz. To keep things moving, run these commands as root:
+
+    cd /sys/devices/system/cpu
+    echo performance | tee cpu*/cpufreq/scaling_governor
+
+    You can later go back to the original state by replacing 'performance' with
+    'ondemand'. If you don't want to change the settings, set AFL_SKIP_CPUFREQ
+    to make afl-fuzz skip this check - but expect some performance drop.
+
+[-] PROGRAM ABORT : Suboptimal CPU scaling governor
+         Location : check_cpu_governor(), afl-fuzz.c:7409
+
+-------------------------- Error 3
+
+l1@L1:~/Desktop/Thesis/validationTools/AFL$ sudo ./afl-fuzz -i ~/Desktop/Thesis/validationTools/baseline/dr_libs/testcase/ -o ~/Desktop/Thesis/validationTools/baseline/dr_libs/findings/ -- ~/Desktop/Thesis/validationTools/baseline/dr_libs/testScript-afl D
+afl-fuzz 2.57b by <lcamtuf@google.com>
+[+] You have 2 CPU cores and 3 runnable tasks (utilization: 150%).
+[*] Checking CPU core loadout...
+[+] Found a free CPU core, binding to #0.
+[*] Checking core_pattern...
+[*] Checking CPU scaling governor...
+[*] Setting up output directories...
+[+] Output directory exists but deemed OK to reuse.
+[*] Deleting old session data...
+[+] Output dir cleanup successful.
+[*] Scanning '/home/l1/Desktop/Thesis/validationTools/baseline/dr_libs/testcase/'...
+
+[-] PROGRAM ABORT : Test case '/home/l1/Desktop/Thesis/validationTools/baseline/dr_libs/testcase//sample2.flac' is too big (21.9 MB, limit is 1.00 MB)
+         Location : read_testcases(), afl-fuzz.c:1500
+-------------------------- Error 4
+
+l1@L1:~/Desktop/Thesis/validationTools/AFL$ sudo ./afl-fuzz -i ~/Desktop/Thesis/validationTools/baseline/dr_libs/testcase/ -o ~/Desktop/Thesis/validationTools/baseline/dr_libs/findings/ -- ~/Desktop/Thesis/validationTools/baseline/dr_libs/testScript-afl D
+afl-fuzz 2.57b by <lcamtuf@google.com>
+[+] You have 2 CPU cores and 6 runnable tasks (utilization: 300%).
+[!] WARNING: System under apparent load, performance may be spotty.
+[*] Checking CPU core loadout...
+[+] Found a free CPU core, binding to #0.
+[*] Checking core_pattern...
+[*] Checking CPU scaling governor...
+[*] Setting up output directories...
+[+] Output directory exists but deemed OK to reuse.
+[*] Deleting old session data...
+[+] Output dir cleanup successful.
+[*] Scanning '/home/l1/Desktop/Thesis/validationTools/baseline/dr_libs/testcase/'...
+[+] No auto-generated dictionary tokens to reuse.
+[*] Creating hard links for all input files...
+[*] Validating target binary...
+
+[-] Looks like the target binary is not instrumented! The fuzzer depends on
+    compile-time instrumentation to isolate interesting test cases while
+    mutating the input data. For more information, and for tips on how to
+    instrument binaries, please see /usr/local/share/doc/afl/README.
+
+    When source code is not available, you may be able to leverage QEMU
+    mode support. Consult the README for tips on how to enable this.
+    (It is also possible to use afl-fuzz as a traditional, "dumb" fuzzer.
+    For that, you can use the -n option - but expect much worse results.)
+
+[-] PROGRAM ABORT : No instrumentation detected
+         Location : check_binary(), afl-fuzz.c:6989
+
+
+

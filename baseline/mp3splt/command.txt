@@ -1,0 +1,3 @@
+ sudo ./afl-fuzz -m 200MB -i ~/Desktop/Thesis/validationTools/baseline/mp3splt/testcase -o ~/Desktop/Thesis/validationTools/baseline/mp3splt/findings/ -- ~/Desktop/Thesis/validationTools/baseline/mp3splt/mp3splt_afl @@
+
+---> odd, check syntax error ==> is the script working on its own?
