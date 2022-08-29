@@ -20,27 +20,37 @@
 
 #include <array>
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 using namespace std;
 
 //////////////////// constants & shared vars ////////////////////
-string script_dir = "/subject_scripts/";
-string findings_dir = "/findings";
+const string script_dir = "/subject_scripts/";
+const string findings_dir = "/findings";
+const string result_file = "results.txt";
+
+const string valid_ogg =
+    "~/Desktop/Thesis/validationTools/vorbis-tools/ogginfo/ogginfo "
+    "./generated/out.ogg";
+const string valid_flac = "metaflac --list ./generated/out.flac";
 
 string subjects[5] = {"dr_libs", "miniaudio", "mp3splt", "xiph_flac", "libogg"};
 string fileType[5] = {"flac", "flac", "ogg", "flac", "ogg"};
 
 int TEST_RUNS = 0;
-int PRINT_LENGTH = 120;
+int PRINT_LENGTH = 160;
 string pathToFuzzers = "";
 
 string ogg_command = "";
+string evil_ogg_command = "";
 string flac_command = "";
+string evil_flac_command = "";
 
 string last_msg = "";
 /////////////////////////////////////////////////////////////////
@@ -48,12 +58,19 @@ string last_msg = "";
 string exec(const char *cmd) {
     char buffer[128];
     string result = "";
+    char *msg;
     FILE *pipe = popen(cmd, "r");
     if (!pipe) throw std::runtime_error("popen() failed!");
     try {
+        // msg = fgets(buffer, sizeof buffer, pipe);
+        // while (result != NULL) {
         while (fgets(buffer, sizeof buffer, pipe) != NULL) {
             result += buffer;
         }
+
+        // if (msg == NULL) {
+        //     cout << "found error" << endl << result << endl;
+        // }
     } catch (...) {
         pclose(pipe);
         throw;
@@ -74,7 +91,7 @@ void printMessageBar(string msg) {
 
     // top / bottom bar
     string bar = "#";
-    bar.append(118, '=');
+    bar.append(PRINT_LENGTH - 2, '=');
     bar += "#";
 
     // format message
@@ -88,41 +105,111 @@ void printMessageBar(string msg) {
     cout << bar << endl;
 }
 
-void printMessage(string msg, char paddingChar){
+void printMessage(string msg, char paddingChar) {
     // handle padding
     int length = PRINT_LENGTH - msg.length();
     int padding = length > 0 ? (length - 2) / 2 : 0;
 
     string pad = "";
     pad.append(padding, paddingChar);
-    msg = " " + msg + " ";
-
+    if (msg.length() > 0) {
+        msg = (" " + msg + " ");
+    } else {
+        msg = "";
+        msg.append(2, paddingChar);
+    }
     cout << pad << msg << pad << (length % 2 == 0 ? ' ' : paddingChar) << endl;
 }
 
-int testSubject(string subjectName, string fileType) {
+string padString(string msg, int LENGTH) {
+    int length = LENGTH - msg.length();
+    length -= length % 2 == 0 ? 0 : 1;
+    int padding = length > 0 ? (length - 2) / 2 : 0;
+
+    string pad = "";
+    pad.append(padding, ' ');
+    msg = " " + msg + " ";
+
+    return (pad + msg + pad /* + (length % 2 == 0 ? "" : " ") */);
+}
+
+void writeResult(vector<int> result, string subject) {
+    std::ofstream file;
+    file.open(result_file, std::ios::out | std::ios::app);
+
+    // create string representation of result
+    string msg = "";
+
+    for (int num : result) {
+        cout << "write " << num << endl;
+        msg += to_string(num) + " ";
+    }
+
+    file << subject << endl << msg << endl;
+}
+
+vector<int> testSubject(string subjectName, string fileType) {
     printMessageBar("Testing: " + subjectName);
     string test_command =
         "." + script_dir + subjectName + "_TS " + "./generated/out." + fileType;
     string move_command =
         "mv ./generated/out." + fileType + " ./findings/" + subjectName + "/";
     string output = "";
+    bool evil = false, valid = false;
+    // eval vars
     int crashes = 0;
+
+    // 0: valid
+    // 1: evil
+    // 2: valid + valid
+    // 3: valid + invalid
+    // 4: evil  + valid
+    // 5: evil  + invalid
+    // 6: valid + valid   + #crashes
+    // 7: valid + invalid + #crashes
+    // 8: evil  + valid   + #crashes
+    // 9: evil  + invalid + #crashes
+    vector<int> results = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     for (int i = 0; i < TEST_RUNS; i++) {
         // print current test
-        if(TEST_RUNS > 1){
-            printMessage(subjectName+" test #"+to_string(i), '.');
+        if (TEST_RUNS > 1) {
+            printMessage(subjectName + " test #" + to_string(i), '.');
         }
 
-        //  generate a file
+        ///////////////////// handle file generation ////////////////////
         if (fileType == "ogg") {
-            exec(ogg_command.c_str());
+            // select valid vs evil fuzzer
+            evil = i % 2 == 0;
+
+            exec(evil ? evil_ogg_command.c_str() : ogg_command.c_str());
+            results.at(evil ? 1 : 0)++;
+
+            // check validity
+            output = exec(valid_ogg.c_str());
+            valid = (output.find("Vorbis stream 1") != string::npos &&
+                     output.find("ERROR: No Ogg data found in the file") ==
+                         string::npos);
+
+            results.at(valid ? (evil ? 4 : 2) : (evil ? 5 : 3))++;
+
         } else if (fileType == "flac") {
-            exec(flac_command.c_str());
+            // select valid vs evil fuzzer
+            evil = i % 2 == 0;
+
+            exec(evil ? evil_flac_command.c_str() : flac_command.c_str());
+            results.at(evil ? 1 : 0)++;
+
+            // check validity
+            output = exec(valid_ogg.c_str());
+            valid = (output.find(
+                         "There was an error while reading the FLAC file.") !=
+                     string::npos);
+
+            results.at(valid ? (evil ? 4 : 2) : (evil ? 5 : 3))++;
         }
 
-        // call the subject with the file
+        //////////////////// check the subjet ////////////////////
         output = exec(test_command.c_str());
 
         // check the console output / whether a error was thrown
@@ -134,23 +221,69 @@ int testSubject(string subjectName, string fileType) {
             exec(cmd.c_str());
 
             // notify
-            printMessage("found crash #" + to_string(crashes) + ". Moved the file to findigs/"+subjectName,'/');
+            printMessage("found crash #" + to_string(crashes) +
+                             ". Moved the file to findigs/" + subjectName,
+                         '/');
 
-            crashes++;
+            results.at(valid ? (evil ? 7 : 6) : (evil ? 9 : 7))++;
+            // crashes++;
         }
     }
 
-    return 0;
+    // save and return the number of crashes
+    writeResult(results, subjectName);
+    return results;
 }
 
-void evaluateSubject(string subjectName, string fileType, int crashes) {
-    float percentage = ((float) crashes / (float) TEST_RUNS);
-    percentage *= percentage < 1 ? 100 : 1;
-    
-    subjectName = subjectName.length() <= 6 ? subjectName + " " : subjectName;
-    fileType = fileType == "ogg" ? "ogg " : fileType;
+void printResults(vector<vector<int>> results) {
+    printMessageBar("Results");
+    cout << endl;
+    printMessage("Legend:", '-');
+    cout << "N  = normal file (should be valid)\n"
+         << "M  = mutated file (should be invalid)\n"
+         << "V  = valid file\n"
+         << "IV = invalid file\n"
+         << "C: = crahes of file with the following properites\n";
+    printMessage("table header for the results", '-');
+    int padding = 14;
+    string separator = "|";
+    cout << padString("subject", padding)   << separator
+         << padString("N", padding)         << separator 
+         << padString("M", padding)         << separator 
+         << padString("N & V", padding)     << separator
+         << padString("N & IV", padding)    << separator
+         << padString("M & V", padding)     << separator
+         << padString("M & IV", padding)    << separator
+         << padString("C: N & V", padding)  << separator
+         << padString("C: N & IV", padding) << separator
+         << padString("C: M & V", padding)  << separator
+         << padString("C: M & IV", padding) << endl;
+    printMessage("", '-');
 
-    printf("%s:\t\t\t out of %d generated %s files, %d crashes were found.\t(%3.0f%% )\n", subjectName.c_str(), TEST_RUNS, fileType.c_str(), crashes, percentage);
+    // print the table
+    int i = 0;
+    string name = "";
+    for (vector<int> res : results) {
+        name = padString(subjects[i], padding);
+
+        if (i == 4) {
+            name.pop_back();
+        }
+
+        cout << name << separator
+             << padString(to_string(res[0]), padding) << separator
+             << padString(to_string(res[1]), padding) << separator
+             << padString(to_string(res[2]), padding) << separator
+             << padString(to_string(res[3]), padding) << separator
+             << padString(to_string(res[4]), padding) << separator
+             << padString(to_string(res[5]), padding) << separator
+             << padString(to_string(res[6]), padding) << separator
+             << padString(to_string(res[7]), padding) << separator
+             << padString(to_string(res[8]), padding) << separator
+             << padString(to_string(res[9]), padding) << endl;
+        i++;
+    }
+    printMessage("", '-');
 }
 
 void validateDirs() {
@@ -159,12 +292,16 @@ void validateDirs() {
                                "findings/dr_libs",   "findings/libogg",
                                "findings/miniaudio", "findings/mp3splt",
                                "findings/xiph_flac"};
+    string required_files[4] = {
+        pathToFuzzers + "ogg-fuzzer", pathToFuzzers + "evil-ogg-fuzzer",
+        pathToFuzzers + "flac-fuzzer", pathToFuzzers + "evil-flac-fuzzer"};
+
     string cmd = "";
     string out = "";
     bool shouldStop = false;
 
-    for (int i = 0; i < (sizeof(required_dirs) / sizeof(required_dirs[0]));
-         i++) {
+    int size = (sizeof(required_dirs) / sizeof(required_dirs[0]));
+    for (int i = 0; i < size; i++) {
         // check existance
         cmd = "[ -d \"./" + required_dirs[i] + "\" ] && echo \"exists\"";
         out = exec(cmd.c_str());
@@ -177,9 +314,27 @@ void validateDirs() {
         }
     }
 
+    size = (sizeof(required_files) / sizeof(required_files[0]));
+    for (int i = 0; i < size; i++) {
+        cmd = "test -f " + required_files[i] + " && echo \"exists\"";
+        out = exec(cmd.c_str());
+
+        if (out.find("exists") == string::npos) {
+            cout << required_files[i] << " does not exist" << endl;
+            shouldStop = true;
+        } else {
+            cout << "found: " << required_files[i] << endl;
+        }
+    }
+
     if (shouldStop) {
         abort();
     }
+}
+
+void cleanUpResultFile() {
+    string command = "rm " + result_file;
+    exec(command.c_str());
 }
 
 void cleanUpFiles() {
@@ -194,6 +349,8 @@ void cleanUpFiles() {
 
         exec(command.c_str());
     }
+
+    cleanUpResultFile();
 }
 
 int main(int argc, char **argv) {
@@ -216,7 +373,11 @@ int main(int argc, char **argv) {
 
     // create the file generation commands
     ogg_command = pathToFuzzers + "ogg-fuzzer fuzz ./generated/out.ogg";
+    evil_ogg_command =
+        pathToFuzzers + "evil-ogg-fuzzer fuzz ./generated/out.ogg";
     flac_command = pathToFuzzers + "flac-fuzzer fuzz ./generated/out.flac";
+    evil_flac_command =
+        pathToFuzzers + "evil-flac-fuzzer fuzz ./generated/out.flac";
 
     if (argc >= 4) {
         string flag = argv[3];
@@ -229,23 +390,24 @@ int main(int argc, char **argv) {
     printMessageBar("Arguments and Metadata for the script");
     // print args
     cout << "test runs: " << TEST_RUNS << endl;
-    cout << "path to fuzzers: " << pathToFuzzers << endl;
+    cout << "path to fuzzers: " << pathToFuzzers << "\n\n";
     cout << "ogg  generation command: " << ogg_command << endl;
+    cout << "evil ogg  generation command: " << evil_ogg_command << "\n\n";
     cout << "flac generation command: " << flac_command << endl;
+    cout << "evil flac generation command: " << evil_flac_command << "\n\n";
     // check required dirs
     validateDirs();
 
+    cleanUpResultFile();
+
     // test subjects
-    int crashes[5];
-    for  (int i = 0; i < (sizeof(subjects) / sizeof(subjects[0])); i++) {
-       crashes[i] = testSubject(subjects[i], fileType[i]);
-    } 
+    vector<vector<int>> results;
+    for (int i = 0; i < (sizeof(subjects) / sizeof(subjects[0])); i++) {
+        results.push_back(testSubject(subjects[i], fileType[i]));
+    }
 
     // evaluate
-    printMessageBar("Evaluation Results");
-    for  (int i = 0; i < (sizeof(subjects) / sizeof(subjects[0])); i++) {
-        evaluateSubject(subjects[i], fileType[i], crashes[i]);
-    }
+    printResults(results);
 
     return 0;
 }
