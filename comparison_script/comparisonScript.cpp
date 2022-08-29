@@ -55,22 +55,19 @@ string evil_flac_command = "";
 string last_msg = "";
 /////////////////////////////////////////////////////////////////
 
-string exec(const char *cmd) {
+string exec(string cmd) {
     char buffer[128];
     string result = "";
     char *msg;
-    FILE *pipe = popen(cmd, "r");
+
+    string command = (cmd + " 2>&1");
+    FILE *pipe = popen(cmd.c_str(), "r");
     if (!pipe) throw std::runtime_error("popen() failed!");
     try {
-        // msg = fgets(buffer, sizeof buffer, pipe);
-        // while (result != NULL) {
         while (fgets(buffer, sizeof buffer, pipe) != NULL) {
             result += buffer;
         }
 
-        // if (msg == NULL) {
-        //     cout << "found error" << endl << result << endl;
-        // }
     } catch (...) {
         pclose(pipe);
         throw;
@@ -121,16 +118,14 @@ void printMessage(string msg, char paddingChar) {
     cout << pad << msg << pad << (length % 2 == 0 ? ' ' : paddingChar) << endl;
 }
 
-string padString(string msg, int LENGTH) {
+string RpadString(string msg, int LENGTH) {
     int length = LENGTH - msg.length();
-    length -= length % 2 == 0 ? 0 : 1;
-    int padding = length > 0 ? (length - 2) / 2 : 0;
+    int padding = length > 0 ? (length - 1) : 0;
 
     string pad = "";
     pad.append(padding, ' ');
-    msg = " " + msg + " ";
 
-    return (pad + msg + pad /* + (length % 2 == 0 ? "" : " ") */);
+    return (" "+ msg + pad);
 }
 
 void writeResult(vector<int> result, string subject) {
@@ -141,7 +136,6 @@ void writeResult(vector<int> result, string subject) {
     string msg = "";
 
     for (int num : result) {
-        cout << "write " << num << endl;
         msg += to_string(num) + " ";
     }
 
@@ -182,11 +176,12 @@ vector<int> testSubject(string subjectName, string fileType) {
             // select valid vs evil fuzzer
             evil = i % 2 == 0;
 
-            exec(evil ? evil_ogg_command.c_str() : ogg_command.c_str());
+            exec(evil ? evil_ogg_command : ogg_command);
             results.at(evil ? 1 : 0)++;
 
             // check validity
-            output = exec(valid_ogg.c_str());
+            output = exec(valid_ogg);
+            cout << "OUTPUT: \t"<<output<<"\n\n";
             valid = (output.find("Vorbis stream 1") != string::npos &&
                      output.find("ERROR: No Ogg data found in the file") ==
                          string::npos);
@@ -197,11 +192,11 @@ vector<int> testSubject(string subjectName, string fileType) {
             // select valid vs evil fuzzer
             evil = i % 2 == 0;
 
-            exec(evil ? evil_flac_command.c_str() : flac_command.c_str());
+            exec(evil ? evil_flac_command : flac_command);
             results.at(evil ? 1 : 0)++;
 
             // check validity
-            output = exec(valid_ogg.c_str());
+            output = exec(valid_ogg);
             valid = (output.find(
                          "There was an error while reading the FLAC file.") !=
                      string::npos);
@@ -210,23 +205,24 @@ vector<int> testSubject(string subjectName, string fileType) {
         }
 
         //////////////////// check the subjet ////////////////////
-        output = exec(test_command.c_str());
+        output = exec(test_command);
 
         // check the console output / whether a error was thrown
+        cout << "OUTPUT: \n"<<output<<"\n\n";
         if (output.find("aborted") != string::npos ||
-            output.find("core dump") != string::npos) {
+            output.find("Segmentation fault (core dumped)") != string::npos) {
             // move most recent file to findigs
             string cmd =
                 move_command + "crash_" + to_string(crashes) + "." + fileType;
-            exec(cmd.c_str());
+            exec(cmd);
 
             // notify
-            printMessage("found crash #" + to_string(crashes) +
+            printMessage("found crash " + to_string(crashes) +
                              ". Moved the file to findigs/" + subjectName,
                          '/');
 
             results.at(valid ? (evil ? 7 : 6) : (evil ? 9 : 7))++;
-            // crashes++;
+            crashes++;
         }
     }
 
@@ -247,40 +243,33 @@ void printResults(vector<vector<int>> results) {
     printMessage("table header for the results", '-');
     int padding = 14;
     string separator = "|";
-    cout << padString("subject", padding)   << separator
-         << padString("N", padding)         << separator 
-         << padString("M", padding)         << separator 
-         << padString("N & V", padding)     << separator
-         << padString("N & IV", padding)    << separator
-         << padString("M & V", padding)     << separator
-         << padString("M & IV", padding)    << separator
-         << padString("C: N & V", padding)  << separator
-         << padString("C: N & IV", padding) << separator
-         << padString("C: M & V", padding)  << separator
-         << padString("C: M & IV", padding) << endl;
+    cout << RpadString("subject", padding)   << separator
+         << RpadString("N", padding)         << separator 
+         << RpadString("M", padding)         << separator 
+         << RpadString("N & V", padding)     << separator
+         << RpadString("N & IV", padding)    << separator
+         << RpadString("M & V", padding)     << separator
+         << RpadString("M & IV", padding)    << separator
+         << RpadString("C: N & V", padding)  << separator
+         << RpadString("C: N & IV", padding) << separator
+         << RpadString("C: M & V", padding)  << separator
+         << RpadString("C: M & IV", padding) << endl;
     printMessage("", '-');
 
     // print the table
     int i = 0;
-    string name = "";
     for (vector<int> res : results) {
-        name = padString(subjects[i], padding);
-
-        if (i == 4) {
-            name.pop_back();
-        }
-
-        cout << name << separator
-             << padString(to_string(res[0]), padding) << separator
-             << padString(to_string(res[1]), padding) << separator
-             << padString(to_string(res[2]), padding) << separator
-             << padString(to_string(res[3]), padding) << separator
-             << padString(to_string(res[4]), padding) << separator
-             << padString(to_string(res[5]), padding) << separator
-             << padString(to_string(res[6]), padding) << separator
-             << padString(to_string(res[7]), padding) << separator
-             << padString(to_string(res[8]), padding) << separator
-             << padString(to_string(res[9]), padding) << endl;
+         cout << RpadString(subjects[i], padding)      << separator
+             << RpadString(to_string(res[0]), padding) << separator
+             << RpadString(to_string(res[1]), padding) << separator
+             << RpadString(to_string(res[2]), padding) << separator
+             << RpadString(to_string(res[3]), padding) << separator
+             << RpadString(to_string(res[4]), padding) << separator
+             << RpadString(to_string(res[5]), padding) << separator
+             << RpadString(to_string(res[6]), padding) << separator
+             << RpadString(to_string(res[7]), padding) << separator
+             << RpadString(to_string(res[8]), padding) << separator
+             << RpadString(to_string(res[9]), padding) << endl;
         i++;
     }
     printMessage("", '-');
@@ -304,7 +293,7 @@ void validateDirs() {
     for (int i = 0; i < size; i++) {
         // check existance
         cmd = "[ -d \"./" + required_dirs[i] + "\" ] && echo \"exists\"";
-        out = exec(cmd.c_str());
+        out = exec(cmd);
 
         if (out.find("exists") == string::npos) {
             cout << required_dirs[i] << " does not exist" << endl;
@@ -317,7 +306,7 @@ void validateDirs() {
     size = (sizeof(required_files) / sizeof(required_files[0]));
     for (int i = 0; i < size; i++) {
         cmd = "test -f " + required_files[i] + " && echo \"exists\"";
-        out = exec(cmd.c_str());
+        out = exec(cmd);
 
         if (out.find("exists") == string::npos) {
             cout << required_files[i] << " does not exist" << endl;
@@ -334,7 +323,7 @@ void validateDirs() {
 
 void cleanUpResultFile() {
     string command = "rm " + result_file;
-    exec(command.c_str());
+    exec(command);
 }
 
 void cleanUpFiles() {
@@ -347,7 +336,7 @@ void cleanUpFiles() {
         cout << "remove files from: " << path << subjects[i] << endl;
         command = "rm " + path + subjects[i] + "/*";
 
-        exec(command.c_str());
+        exec(command);
     }
 
     cleanUpResultFile();
@@ -399,6 +388,10 @@ int main(int argc, char **argv) {
     validateDirs();
 
     cleanUpResultFile();
+
+    testSubject(subjects[4], subjects[4]);
+    return 0;
+
 
     // test subjects
     vector<vector<int>> results;
