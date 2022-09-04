@@ -3,11 +3,13 @@
 
 #include <array>
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -15,15 +17,17 @@ using namespace std;
 const string oggInfoPath =
     "~/Desktop/Thesis/validationTools/vorbis-tools/ogginfo/ogginfo ";
 const int PRINT_LENGTH = 120;
+const int SAVE_INTERVAL = 1000;
+string save_file_name = "results";
 int last_RC;
 ///////////////////////////////////////////////////////////////////////////
 
 /* DOCUMENTATION
  * There are two variables that have to be provided:
- * numberOfGeneratedFiles    {int}       - The number of files that should be
- * generated for each format. pathToFuzzers             {string}    - The path
- * to the parent directory of both fuzzers. onlyMode                  {string}
- * - Whether only one format should be tested and if so, which.
+ * numberOfGeneratedFiles    {int}       - The number of files that should be generated for each format.
+ * pathToFuzzers             {string}    - The path to the parent directory of both fuzzers.
+ * saveFileName              {string}    - The name of the file where the results are saved in.
+ * onlyMode                  {string}    - Whether only one format should be tested and if so, which.
  *
  * Notes:
  * - numberOfGeneratedFiles  - Range: 1 - 10^6.
@@ -96,9 +100,18 @@ void printMessage(string msg, char paddingChar) {
     cout << pad << msg << pad << (length % 2 == 0 ? ' ' : paddingChar) << endl;
 }
 
+void writeResult(int num, int ogg, int flac) {
+    printMessage("saving to file " + save_file_name, '.');
+    std::ofstream file;
+    file.open(save_file_name, std::ios::out | std::ios::app);
+
+    // save current result
+    file << num << ";" << ogg << ";" << flac << ";\n";
+}
+
 int main(int argc, char **argv) {
     // argument validation
-    if (argc < 3) {
+    if (argc < 4) {
         cout << "not enough arguments provided. Check the documentation at the "
                 "top of the file."
              << endl;
@@ -107,7 +120,8 @@ int main(int argc, char **argv) {
 
     int numberOfGeneratedFiles = stoi(argv[1]) ? stoi(argv[1]) : -1;
     string pathToFuzzers = argv[2] ? argv[2] : "";
-    string onlyMode = argc == 4 && argv[3] ? argv[3] : "";
+    save_file_name = argc >= 4 && argv[3] ? argv[3] : save_file_name;
+    string onlyMode = argc >= 5 && argv[4] ? argv[4] : "";
 
     if (numberOfGeneratedFiles < 0 || numberOfGeneratedFiles >= 1000000 ||
         pathToFuzzers.length() == 0) {
@@ -119,6 +133,7 @@ int main(int argc, char **argv) {
     printMessageBar("starting validation script");
     cout << "- number of generated files: " << numberOfGeneratedFiles << endl;
     cout << "- path to fuzzers: " << pathToFuzzers << endl;
+    cout << "- save file name: " << save_file_name << endl;
     cout << "- only mode: "
          << (onlyMode.length() > 0 ? onlyMode.c_str() : "not set") << endl;
     printMessage("", '=');
@@ -138,6 +153,11 @@ int main(int argc, char **argv) {
     string flac_test_cmd = "metaflac --list out.flac";
 
     for (int i = 0; i < numberOfGeneratedFiles; i++) {
+        // save the results
+        if(i % SAVE_INTERVAL == 0 && i != 0){
+            writeResult(i, valid_ogg, valid_flac);
+        }
+
         if (onlyMode == "ogg" || onlyMode.length() == 0) {
             // ----------- OGG --------- //
             // > create ogg file
@@ -171,6 +191,8 @@ int main(int argc, char **argv) {
             }
         }
     }
+
+     writeResult(numberOfGeneratedFiles, valid_ogg, valid_flac);
 
     // calc and  print evaluation and display it as a int
     float percentage_ogg =
