@@ -46,6 +46,7 @@ string subjects[5] = {"dr_libs", "miniaudio", "mp3splt", "xiph_flac", "libogg"};
 string fileType[5] = {"flac", "flac", "ogg", "flac", "ogg"};
 
 int TEST_RUNS = 0;
+int SAVE_INTERVAL = 1000;
 int PRINT_LENGTH = 160;
 string pathToFuzzers = "";
 
@@ -135,14 +136,16 @@ void writeResult(vector<int> result, string subject) {
     std::ofstream file;
     file.open(result_file, std::ios::out | std::ios::app);
 
+    printMessage("Saving results", '#');
+
     // create string representation of result
     string msg = "";
 
     for (int num : result) {
-        msg += to_string(num) + " ";
+        msg += to_string(num) + ";";
     }
 
-    file << subject << endl << msg << endl;
+    file << subject << ";" << msg << endl;
 }
 
 vector<int> testSubject(string subjectName, string fileType) {
@@ -174,6 +177,11 @@ vector<int> testSubject(string subjectName, string fileType) {
             printMessage(subjectName + " test #" + to_string(i), '.');
         }
 
+        ///////////////////// auto save /////////////////////////////////
+        if (i % SAVE_INTERVAL == 0 && i != 0) {
+            writeResult(results, subjectName);
+        }
+
         ///////////////////// handle file generation ////////////////////
         if (fileType == "ogg") {
             // select valid vs evil fuzzer
@@ -201,7 +209,7 @@ vector<int> testSubject(string subjectName, string fileType) {
             // check validity
             output = exec(valid_ogg);
             valid = (output.find(
-                         "There was an error while reading the FLAC file.") !=
+                         "There was an error while reading the FLAC file.") ==
                      string::npos);
 
             results.at(valid ? (evil ? 4 : 2) : (evil ? 5 : 3))++;
@@ -349,7 +357,8 @@ void printHelp() {
     cout << "Needed arguments: \n"
          << "\t\t- {int}    number of testruns for each subject.\n"
          << "\t\t- {string} the path to the directory that contains the "
-            "fuzzers.\n";
+            "fuzzers.\n"
+        << "\t\t- {int}     number of file generations until the current results are saved.\n";
     cout << "\nAdditional Arguments:\n"
          << "\t\t- '-c' {void}  removes the files from the /findings folder\n";
     cout << "\nNotes:\n"
@@ -377,8 +386,9 @@ int main(int argc, char **argv) {
 
     TEST_RUNS = stoi(argv[1]);
     pathToFuzzers = argv[2];
+    SAVE_INTERVAL = argc >= 4 ? stoi(argv[3]) : 1000;
 
-    if (TEST_RUNS < 0 || TEST_RUNS >= 1000000 || pathToFuzzers.length() == 0 ||
+    if (TEST_RUNS < 0 || pathToFuzzers.length() == 0 ||
         pathToFuzzers.back() != '/') {
         cout << "at least one argument is missing or invalid" << endl;
         abort();
@@ -392,8 +402,8 @@ int main(int argc, char **argv) {
     evil_flac_command =
         pathToFuzzers + "evil-flac-fuzzer fuzz ./generated/out.flac";
 
-    if (argc >= 4) {
-        string flag = argv[3];
+    if (argc >= 5) {
+        string flag = argv[4];
         if (flag == "-c") {
             cleanUpFiles();
         }
@@ -403,6 +413,7 @@ int main(int argc, char **argv) {
     printMessageBar("Arguments and Metadata for the script");
     // print args
     cout << "test runs: " << TEST_RUNS << endl;
+    cout << "save intervall: " << SAVE_INTERVAL << endl;
     cout << "path to fuzzers: " << pathToFuzzers << "\n\n";
     cout << "ogg  generation command: " << ogg_command << endl;
     cout << "evil ogg  generation command: " << evil_ogg_command << "\n\n";
