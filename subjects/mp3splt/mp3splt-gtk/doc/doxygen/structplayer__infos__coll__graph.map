@@ -1,0 +1,11 @@
+<map id="player_infos" name="player_infos">
+<area shape="rect" id="node1" title=" " alt="" coords="367,124,470,151"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,5,120,32"/>
+<area shape="rect" id="node3" title=" " alt="" coords="145,5,205,32"/>
+<area shape="rect" id="node4" title=" " alt="" coords="229,5,288,32"/>
+<area shape="rect" id="node5" title=" " alt="" coords="312,5,395,32"/>
+<area shape="rect" id="node6" title=" " alt="" coords="419,5,570,32"/>
+<area shape="rect" id="node7" title=" " alt="" coords="594,5,641,32"/>
+<area shape="rect" id="node8" title=" " alt="" coords="744,5,853,32"/>
+<area shape="rect" id="node9" title=" " alt="" coords="878,5,957,32"/>
+</map>

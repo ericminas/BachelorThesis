@@ -1,0 +1,2 @@
+libmp3splt_la-win32.lo: win32.c /usr/include/stdc-predef.h
+/usr/include/stdc-predef.h:

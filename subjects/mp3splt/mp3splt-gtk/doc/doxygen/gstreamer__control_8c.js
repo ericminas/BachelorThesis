@@ -1,0 +1,26 @@
+var gstreamer__control_8c =
+[
+    [ "gstreamer_add_files", "gstreamer__control_8c.html#a167c8e8f6c2c24fd24592ab03fd671e9", null ],
+    [ "gstreamer_get_filename", "gstreamer__control_8c.html#a746792cf9d94f7bd2914f84423add5c9", null ],
+    [ "gstreamer_get_playlist_number", "gstreamer__control_8c.html#afa339beb2862ac94913aefe039ae7da0", null ],
+    [ "gstreamer_get_song_infos", "gstreamer__control_8c.html#a2118095da72b4747cba0a7c7bbca2cbe", null ],
+    [ "gstreamer_get_time_elapsed", "gstreamer__control_8c.html#a190a97c7f6074712c90d41d7dca9ae9a", null ],
+    [ "gstreamer_get_title_song", "gstreamer__control_8c.html#af6ec5c3b00824971d04066595450e857", null ],
+    [ "gstreamer_get_total_time", "gstreamer__control_8c.html#a5ebfd924609f0919ce4c4f30c93c41d1", null ],
+    [ "gstreamer_get_volume", "gstreamer__control_8c.html#addfaf2fc895bdc1f874762b13dde8647", null ],
+    [ "gstreamer_is_paused", "gstreamer__control_8c.html#a645e1623c20cc5c2080c387f7f3c5cf5", null ],
+    [ "gstreamer_is_playing", "gstreamer__control_8c.html#a8a56a126c9ad7a051bd533aaf0b18e37", null ],
+    [ "gstreamer_is_running", "gstreamer__control_8c.html#ab2472546069d761d4b133267379be60c", null ],
+    [ "gstreamer_jump", "gstreamer__control_8c.html#a667b8bb12dbac076a04f7c8eedffac2f", null ],
+    [ "gstreamer_next", "gstreamer__control_8c.html#a9e930c0dcb9d40fbaeb6f44d5b33fbf2", null ],
+    [ "gstreamer_pause", "gstreamer__control_8c.html#a6ddcca5fcbde8c56d03caccb18d294b1", null ],
+    [ "gstreamer_play", "gstreamer__control_8c.html#a7c94e9c40e444b6c71ad9920d154eeec", null ],
+    [ "gstreamer_play_last_file", "gstreamer__control_8c.html#ab1b3db75ce803a97e1b22194967b2c92", null ],
+    [ "gstreamer_prev", "gstreamer__control_8c.html#a10d68448fa010958b6b2d64439c44642", null ],
+    [ "gstreamer_quit", "gstreamer__control_8c.html#a6d025b901d1034442a762d9b2d24f80e", null ],
+    [ "gstreamer_select_last_file", "gstreamer__control_8c.html#a0427bb99fd05ec7f9c26a0c9d8eca46f", null ],
+    [ "gstreamer_set_volume", "gstreamer__control_8c.html#aef11056c9c7bff93423cda6d963be951", null ],
+    [ "gstreamer_start", "gstreamer__control_8c.html#ac2ea36bbe0a22d8cc5674d8277893f39", null ],
+    [ "gstreamer_start_with_songs", "gstreamer__control_8c.html#ac9df6a36d1d66e824695c18e2b7ecf5b", null ],
+    [ "gstreamer_stop", "gstreamer__control_8c.html#a1e4ee553f543206758fd8c002e000de0", null ]
+];

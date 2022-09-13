@@ -1,0 +1,6 @@
+ Pretending to split file '/home/l1/Desktop/Thesis/validationTools/valid_files/ogg_example.ogg' ...
+ info: file matches the plugin 'ogg vorbis (libvorbis)'
+ info: Ogg Vorbis Stream - 32000 - 117 Kb/s - 2 channels - Total time: 1m.14s
+ info: starting normal split
+   File "/home/l1/Desktop/Thesis/validationTools/valid_files/ogg_example_00m_00s__01m_14s_34h.ogg" created
+ file split (EOF)

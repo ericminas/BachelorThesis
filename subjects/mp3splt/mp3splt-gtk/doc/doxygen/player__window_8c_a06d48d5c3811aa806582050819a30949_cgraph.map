@@ -1,0 +1,4 @@
+<map id="show_connect_button" name="show_connect_button">
+<area shape="rect" id="node1" title="Show the connect button." alt="" coords="5,5,168,32"/>
+<area shape="rect" id="node2" href="$widgets__helper_8c.html#a429c3a203650a74d9b7b37026fd09f8f" title="Does this GtkContainer contain that object?" alt="" coords="216,5,393,32"/>
+</map>

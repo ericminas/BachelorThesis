@@ -1,0 +1,24 @@
+METADATA block #0
+  type: 0 (STREAMINFO)
+  is last: false
+  length: 34
+  minimum blocksize: 4608 samples
+  maximum blocksize: 4608 samples
+  minimum framesize: 2305 bytes
+  maximum framesize: 14124 bytes
+  sample_rate: 44100 Hz
+  channels: 2
+  bits-per-sample: 16
+  total samples: 4664587
+  MD5 signature: 2aeee69c0153cb652c718dfdf0e9ff2d
+METADATA block #1
+  type: 4 (VORBIS_COMMENT)
+  is last: false
+  length: 46
+  vendor string: Lavf57.83.100
+  comments: 1
+    comment[0]: encoder=Lavf57.83.100
+METADATA block #2
+  type: 1 (PADDING)
+  is last: true
+  length: 8192

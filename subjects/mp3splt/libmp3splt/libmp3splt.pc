@@ -1,0 +1,12 @@
+prefix=/home/l1/Desktop/Thesis/Subjects/mp3splt/libmp3splt/target
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libmp3splt
+Description: library for splitting audio files without decoding
+Requires:
+Version: 0.9.3.1518
+Libs: -L${libdir} -lmp3splt
+Cflags: -I${includedir}
+

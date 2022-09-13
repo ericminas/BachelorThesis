@@ -1,0 +1,7 @@
+./testingscript
+/home/l1/Desktop/Thesis/BachelorThesis/comparison_script/generated/out.ogg
+mp3splt 2.6.2 (09/11/14) - using libmp3splt 0.9.2
+	Matteo Trotta <mtrotta AT users.sourceforge.net>
+	Alexandru Munteanu <m AT ioalex.net>
+THIS SOFTWARE COMES WITH ABSOLUTELY NO WARRANTY! USE AT YOUR OWN RISK!
+ error: no plugin matches the file '/home/l1/Desktop/Thesis/BachelorThesis/comparison_script/generated/out.ogg'

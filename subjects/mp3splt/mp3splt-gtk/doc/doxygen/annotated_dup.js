@@ -1,0 +1,27 @@
+var annotated_dup =
+[
+    [ "distance_and_index", "structdistance__and__index.html", "structdistance__and__index" ],
+    [ "douglas_point", "structdouglas__point.html", "structdouglas__point" ],
+    [ "gui_state", "structgui__state.html", "structgui__state" ],
+    [ "gui_status", "structgui__status.html", "structgui__status" ],
+    [ "player_infos", "structplayer__infos.html", "structplayer__infos" ],
+    [ "points_and_tags", "structpoints__and__tags.html", "structpoints__and__tags" ],
+    [ "preferences_state", "structpreferences__state.html", "structpreferences__state" ],
+    [ "preview_index_and_data", "structpreview__index__and__data.html", "structpreview__index__and__data" ],
+    [ "range_preference", "structrange__preference.html", "structrange__preference" ],
+    [ "silence_wave", "structsilence__wave.html", "structsilence__wave" ],
+    [ "spinner_int_preference", "structspinner__int__preference.html", "structspinner__int__preference" ],
+    [ "Split_point", "structSplit__point.html", "structSplit__point" ],
+    [ "ui_for_split", "structui__for__split.html", "structui__for__split" ],
+    [ "ui_infos", "structui__infos.html", "structui__infos" ],
+    [ "ui_main_window", "structui__main__window.html", "structui__main__window" ],
+    [ "ui_state", "structui__state.html", "structui__state" ],
+    [ "ui_with_data", "structui__with__data.html", "structui__with__data" ],
+    [ "ui_with_err", "structui__with__err.html", "structui__with__err" ],
+    [ "ui_with_fname", "structui__with__fname.html", "structui__with__fname" ],
+    [ "ui_with_fnames", "structui__with__fnames.html", "structui__with__fnames" ],
+    [ "ui_with_list", "structui__with__list.html", "structui__with__list" ],
+    [ "ui_with_message", "structui__with__message.html", "structui__with__message" ],
+    [ "ui_with_p_bar", "structui__with__p__bar.html", "structui__with__p__bar" ],
+    [ "ui_with_pat", "structui__with__pat.html", "structui__with__pat" ]
+];

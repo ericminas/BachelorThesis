@@ -1,0 +1,47 @@
+<map id="ui_with_data" name="ui_with_data">
+<area shape="rect" id="node1" title=" " alt="" coords="1225,168,1331,195"/>
+<area shape="rect" id="node2" title=" " alt="" coords="1024,5,1131,32"/>
+<area shape="rect" id="node3" title=" " alt="" coords="264,436,323,463"/>
+<area shape="rect" id="node6" href="$structui__state.html" title=" " alt="" coords="1040,487,1115,513"/>
+<area shape="rect" id="node21" href="$structgui__status.html" title=" " alt="" coords="676,487,765,513"/>
+<area shape="rect" id="node28" href="$structui__infos.html" title=" " alt="" coords="684,1584,757,1611"/>
+<area shape="rect" id="node40" href="$structplayer__infos.html" title=" " alt="" coords="669,1031,772,1057"/>
+<area shape="rect" id="node4" title=" " alt="" coords="20,1284,67,1311"/>
+<area shape="rect" id="node7" href="$structgui__state.html" title=" " alt="" coords="679,2447,762,2473"/>
+<area shape="rect" id="node29" href="$structui__main__window.html" title=" " alt="" coords="228,1664,359,1691"/>
+<area shape="rect" id="node38" href="$structpreview__index__and__data.html" title=" " alt="" coords="201,1968,385,1995"/>
+<area shape="rect" id="node5" title=" " alt="" coords="5,2557,81,2584"/>
+<area shape="rect" id="node8" title=" " alt="" coords="229,2279,358,2305"/>
+<area shape="rect" id="node9" title=" " alt="" coords="226,2329,361,2356"/>
+<area shape="rect" id="node10" title=" " alt="" coords="236,2399,351,2425"/>
+<area shape="rect" id="node11" title=" " alt="" coords="245,1259,341,1285"/>
+<area shape="rect" id="node12" title=" " alt="" coords="234,2983,353,3009"/>
+<area shape="rect" id="node13" title=" " alt="" coords="253,1816,334,1843"/>
+<area shape="rect" id="node14" title=" " alt="" coords="253,3033,334,3060"/>
+<area shape="rect" id="node15" title=" " alt="" coords="232,2449,355,2476"/>
+<area shape="rect" id="node16" title=" " alt="" coords="230,2601,357,2628"/>
+<area shape="rect" id="node17" title=" " alt="" coords="223,2652,364,2679"/>
+<area shape="rect" id="node18" title=" " alt="" coords="224,2703,363,2729"/>
+<area shape="rect" id="node19" title=" " alt="" coords="228,2753,359,2780"/>
+<area shape="rect" id="node20" title=" " alt="" coords="242,2932,345,2959"/>
+<area shape="rect" id="node22" title=" " alt="" coords="264,653,323,680"/>
+<area shape="rect" id="node23" title=" " alt="" coords="252,1107,335,1133"/>
+<area shape="rect" id="node24" href="$structpreferences__state.html" title=" " alt="" coords="651,1919,790,1945"/>
+<area shape="rect" id="node25" title=" " alt="" coords="254,2019,333,2045"/>
+<area shape="rect" id="node26" title=" " alt="" coords="667,255,774,281"/>
+<area shape="rect" id="node27" title=" " alt="" coords="672,305,769,332"/>
+<area shape="rect" id="node30" href="$structsilence__wave.html" title=" " alt="" coords="238,1360,349,1387"/>
+<area shape="rect" id="node31" title=" " alt="" coords="18,91,69,117"/>
+<area shape="rect" id="node32" title=" " alt="" coords="18,1605,69,1632"/>
+<area shape="rect" id="node33" title=" " alt="" coords="215,1715,372,1741"/>
+<area shape="rect" id="node34" title=" " alt="" coords="256,1765,331,1792"/>
+<area shape="rect" id="node35" title=" " alt="" coords="238,1867,349,1893"/>
+<area shape="rect" id="node36" title=" " alt="" coords="260,1917,327,1944"/>
+<area shape="rect" id="node37" title=" " alt="" coords="249,1309,337,1336"/>
+<area shape="rect" id="node39" title=" " alt="" coords="701,357,740,384"/>
+<area shape="rect" id="node41" title=" " alt="" coords="236,1157,351,1184"/>
+<area shape="rect" id="node42" title=" " alt="" coords="263,1208,323,1235"/>
+<area shape="rect" id="node43" title=" " alt="" coords="218,863,369,889"/>
+<area shape="rect" id="node44" title=" " alt="" coords="239,913,348,940"/>
+<area shape="rect" id="node45" title=" " alt="" coords="254,964,333,991"/>
+</map>

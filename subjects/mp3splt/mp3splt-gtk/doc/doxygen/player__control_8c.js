@@ -1,0 +1,27 @@
+var player__control_8c =
+[
+    [ "player_add_files", "player__control_8c.html#a1755b140c982c2ba21a31000b3aed66b", null ],
+    [ "player_add_files_and_select", "player__control_8c.html#a5ddb6e93ee0af3742ea2e1ffbe4e43eb", null ],
+    [ "player_add_play_files", "player__control_8c.html#afd83d9ee7c46a286ed0d2795c6089d13", null ],
+    [ "player_get_elapsed_time", "player__control_8c.html#ad094ef0a8889e042166e6065340ce82e", null ],
+    [ "player_get_filename", "player__control_8c.html#a8182a24714b81dfb7c81d134305e3eb3", null ],
+    [ "player_get_playlist_number", "player__control_8c.html#a8abc58b550f4083e6e2f51f6c41b1f51", null ],
+    [ "player_get_song_infos", "player__control_8c.html#a42944b25d755803ab9d3128d5ace27f1", null ],
+    [ "player_get_title", "player__control_8c.html#aa23b2f1ba1b50c2b5d71ba73a285ef8f", null ],
+    [ "player_get_total_time", "player__control_8c.html#a234edb0cfe41c3e0856078d7c2af0468", null ],
+    [ "player_get_volume", "player__control_8c.html#ad20334aa25fca3d1cf4a72d687caf045", null ],
+    [ "player_is_paused", "player__control_8c.html#a1916c1b118dc65f29747f94909f56373", null ],
+    [ "player_is_playing", "player__control_8c.html#abe0deccf52e820f124e39bae345b93d7", null ],
+    [ "player_is_running", "player__control_8c.html#ab570a72d3983fbce4e16ab061b70f18b", null ],
+    [ "player_next", "player__control_8c.html#ad5a2d8896941022d252ecc9750b6a1f3", null ],
+    [ "player_pause", "player__control_8c.html#aebe87cb58afe5f9318a4589260658560", null ],
+    [ "player_play", "player__control_8c.html#a1f38af9926922bf858ebb27474f8ac93", null ],
+    [ "player_prev", "player__control_8c.html#a7e40c88952ee37fda2da2536dc703c7c", null ],
+    [ "player_quit", "player__control_8c.html#a65e5d5e017a6e54995555dfe746cabf5", null ],
+    [ "player_seek", "player__control_8c.html#aa750510f72fa1d884d76f709071edaa2", null ],
+    [ "player_set_volume", "player__control_8c.html#a7030a9e1a35134c377ebbf6eca932b7d", null ],
+    [ "player_start", "player__control_8c.html#aaf4d12d9020b0bbc28aac8a0bb2e8e40", null ],
+    [ "player_start_add_files", "player__control_8c.html#a2e0d38ccb02c58623694f423d70ec02b", null ],
+    [ "player_start_play_with_songs", "player__control_8c.html#a420a89d1263a8e6e9837d8bee3b3650f", null ],
+    [ "player_stop", "player__control_8c.html#a27073ce3afa489e5835856c299af0b9a", null ]
+];
