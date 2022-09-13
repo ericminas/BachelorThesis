@@ -48,6 +48,7 @@ string fileType[5] = {"flac", "flac", "ogg", "flac", "ogg"};
 int TEST_RUNS = 0;
 int SAVE_INTERVAL = 1000;
 int PRINT_LENGTH = 160;
+int MAX_SAVE_FILES_SUBJECT = 100;
 string pathToFuzzers = "";
 
 string ogg_command = "";
@@ -158,6 +159,7 @@ vector<int> testSubject(string subjectName, string fileType) {
     bool evil = false, valid = false;
     // eval vars
     int crashes = 0;
+    int saved_files = 0;
 
     // 0: valid
     // 1: evil
@@ -222,17 +224,21 @@ vector<int> testSubject(string subjectName, string fileType) {
         if (output.find("aborted") != string::npos ||
             output.find("Segmentation fault (core dumped)") != string::npos ||
             last_RC != 0) {
-            // move most recent file to findigs
-            string cmd =
-                move_command + "crash_" + to_string(crashes) + "." + fileType;
-            exec(cmd);
+
+            // move the file that caused the crash to findigs, if its allowed
+            if(saved_files <= MAX_SAVE_FILES_SUBJECT) {
+                string cmd =
+                    move_command + "crash_" + to_string(crashes) + "." + fileType;
+                exec(cmd);
+                saved_files++;
+            }
 
             // notify
             printMessage("found crash " + to_string(crashes) +
                              ". Moved the file to findigs/" + subjectName,
                          '/');
 
-            results.at(valid ? (evil ? 7 : 6) : (evil ? 9 : 7))++;
+            results.at(valid ? (evil ? 8 : 6) : (evil ? 9 : 7))++;
             crashes++;
         }
     }

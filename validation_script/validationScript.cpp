@@ -123,8 +123,7 @@ int main(int argc, char **argv) {
     save_file_name = argc >= 4 && argv[3] ? argv[3] : save_file_name;
     string onlyMode = argc >= 5 && argv[4] ? argv[4] : "";
 
-    if (numberOfGeneratedFiles < 0 || numberOfGeneratedFiles >= 1000000 ||
-        pathToFuzzers.length() == 0) {
+    if (numberOfGeneratedFiles < 0 || pathToFuzzers.length() == 0) {
         cout << "at least one argument is missing or invalid" << endl;
         abort();
     }
