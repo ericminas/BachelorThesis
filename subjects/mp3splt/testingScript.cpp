@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     } */
 
     // call the program with the file and check the console output
-    string cmd = "mp3splt -P "+string(argv[1]) + " 0.0 EOF";
+    string cmd = "mp3splt -P " + string(argv[1]) + " 0.0 EOF";
     const char* command = cmd.c_str();
 
 
