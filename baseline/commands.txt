@@ -1,0 +1,36 @@
+########## tmux guide ##########
+https://www.hamvocke.com/blog/a-quick-and-easy-guide-to-tmux/
+
+########## dr_libs ##########
+-- build
+
+-- test
+~/afl/afl-fuzz -m none -i ~/thesis/baseline/dr_libs/testcase/ -o ~/thesis/baseline/dr_libs/findings/ -- ~/thesis/baseline/dr_libs/dr_libs_afl @@
+
+########## libogg -> plogg ##########
+-- build
+~/afl/afl-g++ -g -c -o plogg.o plogg.cpp
+~/afl/afl-g++ -g -o ~/thesis/baseline/libogg/libogg_afl plogg.o -lvorbis -logg -lSDL -lasound
+
+-- test
+
+########## miniaudio ##########
+-- build
+~/afl/afl-g++ ./examples/testingScript/testingscript.cpp -o ~/thesis/baseline/miniaudio/miniaudio_afl
+
+-- test
+./afl/afl-fuzz -m none -i ./thesis/baseline/miniaudio/testcase/ -o  ./thesis/baseline/miniaudio/findings/ -- ./thesis/baseline/miniaudio/miniaudio_afl @@
+
+########## mp3splt ##########
+-- build
+~/afl/afl-g++ testingScript.cpp -o ~/thesis/baseline/mp3splt/mp3splt_afl
+
+-- test
+./afl/afl-fuzz -m none -i ./thesis/baseline/mp3splt/testcase/ -o ./thesis/baseline/mp3splt/findings -- ./thesis/baseline/mp3splt/mp3splt_afl @@
+
+########## xiph_flac ##########
+-- build
+~/afl/afl-g++ ./testingScriptDir/testingScript.cpp -o ~/thesis/baseline/xiph_flac/xiph_flac_afl
+
+-- test
+./afl/afl-fuzz -m none -i ./thesis/baseline/xiph_flac/testcase/ -o ./thesis/baseline/xiph_flac/findings -- ./thesis/baseline/xiph_flac/xiph_flac_afl @@

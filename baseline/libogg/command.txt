@@ -4,5 +4,5 @@ use plogg to play a file with libogg
 ~/Desktop/Thesis/validationTools/AFL/afl-g++ -g -o ~/Desktop/Thesis/validationTools/baseline/libogg/libogg_afl plogg.o -lvorbis -logg -lSDL -lasound
 
 -- fuzz
-sudo ./afl-fuzz -m 200MB -i ~/Desktop/Thesis/validationTools/baseline/libogg/testcase -o ~/Desktop/Thesis/validationTools/baseline/libogg/findings/ -- ~/Desktop/Thesis/validationTools/baseline/libogg/libogg_afl @@
+sudo ./afl-fuzz -m none -i ~/Desktop/Thesis/validationTools/baseline/libogg/testcase -o ~/Desktop/Thesis/validationTools/baseline/libogg/findings/ -- ~/Desktop/Thesis/validationTools/baseline/libogg/libogg_afl @@
 

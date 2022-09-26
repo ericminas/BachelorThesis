@@ -206,7 +206,7 @@ vector<int> testSubject(string subjectName, string fileType) {
             results.at(evil ? 1 : 0)++;
 
             // check validity
-            output = exec(valid_ogg);
+            output = exec(valid_flac);
             valid = (output.find(
                          "There was an error while reading the FLAC file.") ==
                      string::npos);
