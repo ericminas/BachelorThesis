@@ -8,7 +8,7 @@
  * Optional Args
  * -c            {void}      - Whether the files in the findings folder should
  *                             be deleted before the program starts.
- * -h            {boid}      - Prints a help message.
+ * -h            {void}      - Prints a help message.
  *
  * Notes:
  * - numberOfGeneratedFiles  - Range: [1 , 10^6].
@@ -42,8 +42,8 @@ const string valid_ogg =
     "./generated/out.ogg";
 const string valid_flac = "metaflac --list ./generated/out.flac";
 
-string subjects[5] = {"dr_libs", "miniaudio", "mp3splt", "xiph_flac", "libogg"};
-string fileType[5] = {"flac", "flac", "ogg", "flac", "ogg"};
+string subjects[5] = {"dr_libs", "miniaudio", /* "mp3splt", */ "xiph_flac"/* , "libogg" */};
+string fileType[5] = {"flac", "flac", /* "ogg", */ "flac"/* , "ogg" */};
 
 int TEST_RUNS = 0;
 int SAVE_INTERVAL = 1000;
@@ -149,6 +149,11 @@ void writeResult(vector<int> result, string subject) {
 }
 
 vector<int> testSubject(string subjectName, string fileType) {
+    if(subjectName == "" || fileType == "") {
+         vector<int> results = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+         return results;
+    }
+    
     printMessageBar("Testing: " + subjectName);
     string test_command =
         "." + script_dir + subjectName + "_TS " + "./generated/out." + fileType;
@@ -224,14 +229,17 @@ vector<int> testSubject(string subjectName, string fileType) {
             // move most recent file to findigs
             string cmd =
                 move_command + "crash_" + to_string(crashes) + "." + fileType;
-            exec(cmd);
-
+ 
+            if (crashes <= 1000) {
+                exec(cmd);
+            }
+ 
             // notify
             printMessage("found crash " + to_string(crashes) +
-                             ". Moved the file to findigs/" + subjectName,
+                            ". Moved the file to findigs/" + subjectName,
                          '/');
 
-            results.at(valid ? (evil ? 7 : 6) : (evil ? 9 : 7))++;
+            results.at(valid ? (evil ? 8 : 6) : (evil ? 9 : 7))++;
             crashes++;
         }
     }
@@ -357,7 +365,8 @@ void printHelp() {
          << "\t\t- {int}    number of testruns for each subject.\n"
          << "\t\t- {string} the path to the directory that contains the "
             "fuzzers.\n"
-        << "\t\t- {int}     number of file generations until the current results are saved.\n";
+         << "\t\t- {int}     number of file generations until the current "
+            "results are saved.\n";
     cout << "\nAdditional Arguments:\n"
          << "\t\t- '-c' {void}  removes the files from the /findings folder\n";
     cout << "\nNotes:\n"
